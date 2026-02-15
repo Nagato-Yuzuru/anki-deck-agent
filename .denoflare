@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/skymethod/denoflare/v0.7.0/common/config.schema.json",
+  "profiles": {
+    "prod": {
+      "accountId": "${env:CLOUDFLARE_ACCOUNT_ID}",
+      "apiToken": "${env:CLOUDFLARE_API_TOKEN}"
+    }
+  },
+  "scripts": {
+    "api-worker": {
+      "path": "workers",
+      "localPort": 8080,
+      "bindings": {
+        "DB": {
+          "d1DatabaseUuid": "${env:D1_DATABASE_ID}"
+        },
+        "ASSETS": {
+          "bucketName": "${env:R2_BUCKET_NAME}"
+        },
+        "EVENTS": {
+          "queueName": "${env:QUEUE_NAME}"
+        }
+      },
+      "workersDev": true
+    }
+  }
+}

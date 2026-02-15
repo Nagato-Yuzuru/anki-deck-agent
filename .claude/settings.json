@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(.idea/**)",
+      "Read(.git/**)",
+      "Read(.DS_Store)",
+      "Read(dist/**)",
+      "Read(build/**)",
+      "Read(backend.hcl)"
+    ]
+  },
+  "enabledPlugins": {
+    "cloudflare@cloudflare": true,
+    "code-review@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "context7@claude-plugins-official": true
+  }
+}
