@@ -5,13 +5,16 @@
     "jsr:@grammyjs/grammy@^2.0.0-beta.3": "2.0.0-beta.3",
     "jsr:@hono/hono@^4.11.9": "4.11.9",
     "jsr:@std/assert@1": "1.0.18",
+    "jsr:@std/assert@^1.0.17": "1.0.18",
     "jsr:@std/internal@^1.0.12": "1.0.12",
+    "jsr:@std/testing@1": "1.0.17",
     "jsr:@zod/zod@^4.3.6": "4.3.6",
     "npm:@cloudflare/ai@^1.2.2": "1.2.2",
     "npm:@cloudflare/workers-types@^4.20260214.0": "4.20260214.0",
     "npm:@opentelemetry/api@^1.9.0": "1.9.0",
     "npm:drizzle-kit@~0.31.9": "0.31.9_esbuild@0.25.12",
-    "npm:drizzle-orm@~0.45.1": "0.45.1_@cloudflare+workers-types@4.20260214.0_@opentelemetry+api@1.9.0"
+    "npm:drizzle-orm@~0.45.1": "0.45.1_@cloudflare+workers-types@4.20260214.0_@opentelemetry+api@1.9.0",
+    "npm:neverthrow@^8.1.1": "8.2.0"
   },
   "jsr": {
     "@grammyjs/debug@0.1.2": {
@@ -34,6 +37,13 @@
     },
     "@std/internal@1.0.12": {
       "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"
+    },
+    "@std/testing@1.0.17": {
+      "integrity": "87bdc2700fa98249d48a17cd72413352d3d3680dcfbdb64947fd0982d6bbf681",
+      "dependencies": [
+        "jsr:@std/assert@^1.0.17",
+        "jsr:@std/internal"
+      ]
     },
     "@zod/zod@4.3.6": {
       "integrity": "7144e5e11f8ffc3cf6e2fca624f6597a8762898aac9868cc8938e9398b96ffe4"
@@ -309,6 +319,11 @@
     "@opentelemetry/api@1.9.0": {
       "integrity": "sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg=="
     },
+    "@rollup/rollup-linux-x64-gnu@4.58.0": {
+      "integrity": "sha512-+410Srdoh78MKSJxTQ+hZ/Mx+ajd6RjjPwBPNd0R3J9FtL6ZA0GqiiyNjCO9In0IzZkCNrpGymSfn+kgyPQocg==",
+      "os": ["linux"],
+      "cpu": ["x64"]
+    },
     "buffer-from@1.1.2": {
       "integrity": "sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ=="
     },
@@ -417,6 +432,12 @@
     "ms@2.1.3": {
       "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA=="
     },
+    "neverthrow@8.2.0": {
+      "integrity": "sha512-kOCT/1MCPAxY5iUV3wytNFUMUolzuwd/VF/1KCx7kf6CutrOsTie+84zTGTpgQycjvfLdBBdvBvFLqFD2c0wkQ==",
+      "optionalDependencies": [
+        "@rollup/rollup-linux-x64-gnu"
+      ]
+    },
     "resolve-pkg-maps@1.0.0": {
       "integrity": "sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw=="
     },
@@ -435,10 +456,22 @@
     "dependencies": [
       "jsr:@hono/hono@^4.11.9",
       "jsr:@std/assert@1",
-      "jsr:@zod/zod@^4.3.6"
+      "jsr:@std/testing@1",
+      "jsr:@zod/zod@^4.3.6",
+      "npm:@cloudflare/workers-types@^4.20260214.0",
+      "npm:drizzle-kit@~0.31.9",
+      "npm:drizzle-orm@~0.45.1",
+      "npm:neverthrow@^8.1.1"
     ],
+    "packageJson": {
+      "dependencies": [
+        "npm:@cloudflare/workers-types@^4.20260214.0",
+        "npm:drizzle-kit@~0.31.9",
+        "npm:drizzle-orm@~0.45.1"
+      ]
+    },
     "members": {
-      "workers": {
+      "workers/shared": {
         "dependencies": [
           "jsr:@grammyjs/grammy@^2.0.0-beta.3",
           "npm:@cloudflare/ai@^1.2.2",
