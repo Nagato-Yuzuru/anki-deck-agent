@@ -41,6 +41,5 @@ repos:
     rev: v1.105.0
     hooks:
       - id: terraform_fmt
-        args: [-recursive]
         files: ^infra/
         stages: [pre-commit]

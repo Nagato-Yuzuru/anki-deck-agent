@@ -10,6 +10,9 @@ terraform {
 resource "cloudflare_d1_database" "this" {
   account_id = var.account_id
   name       = var.database_name
+  read_replication = {
+    mode = "auto"
+  }
 }
 
 output "id" {

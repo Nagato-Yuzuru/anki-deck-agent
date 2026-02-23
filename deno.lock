@@ -12,6 +12,7 @@
     "npm:@cloudflare/ai@^1.2.2": "1.2.2",
     "npm:@cloudflare/workers-types@^4.20260214.0": "4.20260214.0",
     "npm:@opentelemetry/api@^1.9.0": "1.9.0",
+    "npm:drizzle-kit@*": "0.31.9_esbuild@0.25.12",
     "npm:drizzle-kit@~0.31.9": "0.31.9_esbuild@0.25.12",
     "npm:drizzle-orm@~0.45.1": "0.45.1_@cloudflare+workers-types@4.20260214.0_@opentelemetry+api@1.9.0",
     "npm:neverthrow@^8.1.1": "8.2.0"

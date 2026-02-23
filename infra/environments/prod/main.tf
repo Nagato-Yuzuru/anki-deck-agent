@@ -48,7 +48,7 @@ module "r2" {
   source      = "../../modules/r2"
   account_id  = var.cloudflare_account_id
   bucket_name = "prod-assets-bucket"
-  location = var.r2_location
+  location    = var.r2_location
 }
 
 module "queues" {
@@ -72,5 +72,27 @@ resource "local_file" "denoflare_env" {
 
     # Queue Bindings
     QUEUE_NAME=${module.queues.name}
+  EOT
+}
+
+resource "local_file" "wrangler_toml" {
+  filename = "${path.module}/../../../wrangler.toml"
+  content  = <<-EOT
+    name = "my-worker"
+    main = "dist/worker.js"
+    compatibility_date = "2026-02-22"
+
+    [[d1_databases]]
+    binding = "DB"
+    database_name = "${module.d1.name}"
+    database_id = "${module.d1.id}"
+
+    [[r2_buckets]]
+    binding = "BUCKET"
+    bucket_name = "${module.r2.name}"
+
+    [[queues.producers]]
+    binding = "QUEUE"
+    queue = "${module.queues.name}"
   EOT
 }

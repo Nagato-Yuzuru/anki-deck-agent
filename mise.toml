@@ -2,3 +2,4 @@
 deno = "2.6.8"      # 2.6.9 has a bug(Issue #32123) about drizzle-kit
 just = "latest"
 opentofu = "latest"
+wrangler = "latest"
