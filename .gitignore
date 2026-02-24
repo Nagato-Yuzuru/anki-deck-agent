@@ -323,3 +323,12 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Wrangler local state
+.wrangler/
+
+# Wrangler local secrets (actual files, not .example)
+.dev.vars
+
+# OpenTofu generated (previously used by denoflare, still needed for deploy)
+.env.infra

@@ -15,8 +15,8 @@
     "neverthrow": "npm:neverthrow@^8.1.1"
   },
   "tasks": {
-    "dev:api": "denoflare serve workers/api/index.ts",
-    "dev:processor": "denoflare serve workers/processor/index.ts",
+    "dev:api": "wrangler dev --config workers/api/wrangler.jsonc",
+    "dev:processor": "wrangler dev --config workers/processor/wrangler.jsonc",
     "db:generate": "deno run -A npm:drizzle-kit generate",
     "db:migrate": "deno run -A npm:drizzle-kit migrate",
     "lint": "deno lint",
@@ -35,7 +35,8 @@
     "lineWidth": 120,
     "exclude": [
       "dist/",
-      ".denoflare/",
+      ".agent/",
+      ".wrangler/",
       "node_modules/",
       "pnpm-lock.yaml"
     ]
@@ -43,7 +44,8 @@
   "lint": {
     "exclude": [
       "dist/",
-      ".denoflare/",
+      ".agent/",
+      ".wrangler/",
       "node_modules/"
     ],
     "rules": {
