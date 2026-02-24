@@ -1,0 +1,34 @@
+{
+  "name": "anki-api",
+  "main": "./index.ts",
+  "compatibility_date": "2026-02-22",
+  "build": {
+    "command": "deno install",
+    "cwd": "../..",
+    "watch_dir": ["./", "../shared/"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "prod-db-v1",
+      "database_id": "local-dev-placeholder"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "ASSETS",
+      "bucket_name": "prod-assets-bucket"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "EVENTS",
+        "queue": "prod-event-queue"
+      }
+    ]
+  },
+  "observability": {
+    "enabled": true
+  }
+}

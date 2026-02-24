@@ -1,0 +1,35 @@
+{
+  "name": "anki-processor",
+  "main": "./index.ts",
+  "compatibility_date": "2026-02-22",
+  "build": {
+    "command": "deno install",
+    "cwd": "../..",
+    "watch_dir": ["./", "../shared/"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "prod-db-v1",
+      "database_id": "local-dev-placeholder"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "ASSETS",
+      "bucket_name": "prod-assets-bucket"
+    }
+  ],
+  "queues": {
+    "consumers": [
+      {
+        "queue": "prod-event-queue",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5
+      }
+    ]
+  },
+  "observability": {
+    "enabled": true
+  }
+}
