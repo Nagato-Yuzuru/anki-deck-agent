@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "chat-sdk": {
+      "source": "vercel/chat",
+      "sourceType": "github",
+      "computedHash": "dd43b1cf55f7a481732655011e121140143db3c1280b7ed502fa6be8180fb057"
+    },
+    "opentofu-guide": {
+      "source": "josiahsiegel/claude-plugin-marketplace",
+      "sourceType": "github",
+      "computedHash": "e7f3b4b9c6793aa34b29abd98b353e22778b4e7f125346788b4b7f9a43393838"
+    }
+  }
+}

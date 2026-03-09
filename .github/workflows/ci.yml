@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    name: Type-check, Lint, Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: lts
+
+      - name: Cache Deno dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.deno
+          key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
+          restore-keys: |
+            deno-${{ runner.os }}-
+
+      - name: Run check (type-check + lint + format)
+        run: deno task check
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: lts
+
+      - name: Cache Deno dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.deno
+          key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
+          restore-keys: |
+            deno-${{ runner.os }}-
+
+      - name: Run tests
+        run: deno test
+
+  tofu-validate:
+    name: OpenTofu Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+
+      - name: Cache OpenTofu plugins and modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.terraform
+            ~/.tofu
+            infra/.terraform
+          key: tofu-${{ runner.os }}-${{ hashFiles('infra/**/*.tf') }}
+          restore-keys: |
+            tofu-${{ runner.os }}-
+
+      - name: Initialize OpenTofu (backend=false for validation)
+        run: cd infra && tofu init -backend=false
+
+      - name: Validate OpenTofu
+        run: cd infra && tofu validate
+
+      - name: Check OpenTofu format
+        run: cd infra && tofu fmt -check

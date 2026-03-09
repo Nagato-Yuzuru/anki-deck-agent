@@ -1,0 +1,50 @@
+name: "📋 Task"
+description: A general development task or refactoring work
+labels: ["task"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Define a development task: refactoring, tech debt, documentation, or other non-bug/feature work.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to be done?
+      placeholder: |
+        Refactor the authentication layer to [reason]. Currently [current state], should be [desired state].
+
+  - type: checkboxes
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: How do we know this task is complete?
+      options:
+        - label: "[ ] Task step 1"
+        - label: "[ ] Task step 2"
+        - label: "[ ] Tests pass"
+        - label: "[ ] Code reviewed and approved"
+
+  - type: textarea
+    id: implementation_notes
+    attributes:
+      label: "🤖 Implementation Notes"
+      description: |
+        **For AI agents:** Record progress, blockers, decisions, and intermediate findings here.
+        Do NOT delete this section—leave it if you cannot populate it.
+      placeholder: |
+        - Progress: Completed [X], in progress [Y], blocked on [Z]
+        - Blockers: [describe any issues]
+        - Files modified: [list]
+        - Next steps: [what to do next]
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I understand the scope of this task
+        - label: This is not a bug or feature request

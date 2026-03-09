@@ -332,3 +332,4 @@ terraform.rc
 
 # OpenTofu generated (previously used by denoflare, still needed for deploy)
 .env.infra
+/infra/backend.hcl

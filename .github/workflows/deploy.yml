@@ -1,0 +1,43 @@
+name: Deploy
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  deploy-api:
+    name: Deploy API Worker
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: lts
+
+      - name: Deploy anki-api worker
+        run: |
+          # TODO: Implement wrangler deploy for anki-api
+          # deno task deploy:api
+          echo "Deploy anki-api to Cloudflare Workers"
+
+  deploy-processor:
+    name: Deploy Processor Worker
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: lts
+
+      - name: Deploy anki-processor worker
+        run: |
+          # TODO: Implement wrangler deploy for anki-processor
+          # deno task deploy:processor
+          echo "Deploy anki-processor to Cloudflare Workers"

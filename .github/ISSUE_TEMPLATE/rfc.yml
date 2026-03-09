@@ -1,0 +1,71 @@
+name: "📝 RFC (Request for Comments)"
+description: Propose an architectural decision or major design change
+labels: ["rfc"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for major architectural decisions, design patterns, or significant technical changes that require team discussion and approval.
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this change necessary? What problem does it solve?
+      placeholder: |
+        Current architecture [current state] causes [problem]. This RFC proposes [solution] to improve [aspect].
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Detailed description of the proposed change
+      placeholder: |
+        ## Overview
+        [Overview of the proposal]
+
+        ## Implementation Approach
+        [How it would be implemented]
+
+        ## Impact on Codebase
+        [Files/modules affected]
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What other approaches were evaluated? Why is this proposal better?
+      placeholder: |
+        ### Alternative 1: [Name]
+        Pros: [...]
+        Cons: [...]
+
+        ### Alternative 2: [Name]
+        Pros: [...]
+        Cons: [...]
+
+  - type: checkboxes
+    id: review_checklist
+    attributes:
+      label: Review Checklist
+      options:
+        - label: "[ ] Proposal is well-documented"
+        - label: "[ ] Alternatives have been considered"
+        - label: "[ ] Impact on codebase is clear"
+        - label: "[ ] Ready for team discussion"
+
+  - type: textarea
+    id: decision_record
+    attributes:
+      label: "🤖 Decision Record"
+      description: |
+        **For team & AI agents:** Record the final decision, rationale, trade-offs, and implementation plan here after discussion.
+        Do NOT delete this section—leave it if you cannot populate it.
+      placeholder: |
+        - **Decision:** [Decided to / Not to proceed with]
+        - **Rationale:** [Why this decision was made]
+        - **Trade-offs:** [What we're giving up, what we're gaining]
+        - **Implementation Plan:** [Steps to implement or deprecate]
+        - **Timeline:** [When to start/complete]

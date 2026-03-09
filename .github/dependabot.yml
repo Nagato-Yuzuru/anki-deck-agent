@@ -1,0 +1,55 @@
+version: 2
+
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "yuzuru"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # OpenTofu
+  - package-ecosystem: "terraform"
+    directory: "infra"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:30"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "yuzuru"
+    labels:
+      - "dependencies"
+      - "infrastructure"
+    commit-message:
+      prefix: "infra"
+      include: "scope"
+
+  # npm (for any Node.js dependencies imported via Deno)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "yuzuru"
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    allow:
+      - dependency-type: "all"

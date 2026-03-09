@@ -1,0 +1,77 @@
+name: "🐛 Bug Report"
+description: Report a bug or unexpected behavior
+labels: ["bug"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please provide as much detail as possible to help us reproduce and fix the issue.
+
+  - type: dropdown
+    id: environment_os
+    attributes:
+      label: Operating System
+      options:
+        - macOS
+        - Linux
+        - Windows
+        - Other (please specify below)
+
+  - type: input
+    id: deno_version
+    attributes:
+      label: Deno Version
+      placeholder: "deno --version"
+      description: Output of `deno --version`
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Clear, numbered steps to reproduce the bug
+      placeholder: |
+        1. Run `deno task dev:api`
+        2. Send a POST request to `/api/endpoint`
+        3. Observe the error
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: What should happen?
+
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happens? Include error messages, stack traces.
+
+  - type: textarea
+    id: logs_screenshots
+    attributes:
+      label: Logs & Screenshots
+      description: Paste logs, error messages, or screenshots
+
+  - type: textarea
+    id: agent_notes
+    attributes:
+      label: "🤖 Agent Notes"
+      description: |
+        **For AI agents:** Record investigation findings, root cause analysis, affected files, and potential solutions here.
+        Do NOT delete this section—leave it if you cannot populate it.
+      placeholder: |
+        - Investigated: checked X file, found Y behavior
+        - Root cause: [description]
+        - Affected files: [list]
+        - Potential fix: [description]
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched for similar issues
+        - label: I can reproduce this issue
+        - label: This happens on latest Deno version
