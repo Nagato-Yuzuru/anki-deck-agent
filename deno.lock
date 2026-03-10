@@ -9,11 +9,10 @@
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/testing@1": "1.0.17",
     "jsr:@zod/zod@^4.3.6": "4.3.6",
-    "npm:@cloudflare/workers-types@^4.20260214.0": "4.20260214.0",
     "npm:@opentelemetry/api@^1.9.0": "1.9.0",
     "npm:drizzle-kit@*": "0.31.9_esbuild@0.25.12",
     "npm:drizzle-kit@~0.31.9": "0.31.9_esbuild@0.25.12",
-    "npm:drizzle-orm@~0.45.1": "0.45.1_@cloudflare+workers-types@4.20260214.0_@opentelemetry+api@1.9.0",
+    "npm:drizzle-orm@~0.45.1": "0.45.1_@opentelemetry+api@1.9.0",
     "npm:grammy@^1.35.0": "1.41.1",
     "npm:jq@*": "1.7.2",
     "npm:neverthrow@^8.1.1": "8.2.0"
@@ -61,9 +60,6 @@
         "@csstools/css-tokenizer",
         "lru-cache"
       ]
-    },
-    "@cloudflare/workers-types@4.20260214.0": {
-      "integrity": "sha512-qb8rgbAdJR4BAPXolXhFL/wuGtecHLh1veOyZ1mK6QqWuCdI3vK1biKC0i3lzmzdLR/DZvsN3mNtpUE8zpWGEg=="
     },
     "@csstools/color-helpers@6.0.2": {
       "integrity": "sha512-LMGQLS9EuADloEFkcTBR3BwV/CGHV7zyDxVRtVDTwdI2Ca4it0CCVTT9wCkxSgokjE5Ho41hEPgb8OEUwoXr6Q=="
@@ -478,14 +474,12 @@
       ],
       "bin": true
     },
-    "drizzle-orm@0.45.1_@cloudflare+workers-types@4.20260214.0_@opentelemetry+api@1.9.0": {
+    "drizzle-orm@0.45.1_@opentelemetry+api@1.9.0": {
       "integrity": "sha512-Te0FOdKIistGNPMq2jscdqngBRfBpC8uMFVwqjf6gtTVJHIQ/dosgV/CLBU2N4ZJBsXL5savCba9b0YJskKdcA==",
       "dependencies": [
-        "@cloudflare/workers-types",
         "@opentelemetry/api"
       ],
       "optionalPeers": [
-        "@cloudflare/workers-types",
         "@opentelemetry/api"
       ]
     },
@@ -856,7 +850,6 @@
       "jsr:@std/assert@1",
       "jsr:@std/testing@1",
       "jsr:@zod/zod@^4.3.6",
-      "npm:@cloudflare/workers-types@^4.20260214.0",
       "npm:drizzle-kit@~0.31.9",
       "npm:drizzle-orm@~0.45.1",
       "npm:grammy@^1.35.0",
@@ -864,7 +857,6 @@
     ],
     "packageJson": {
       "dependencies": [
-        "npm:@cloudflare/workers-types@^4.20260214.0",
         "npm:drizzle-kit@~0.31.9",
         "npm:drizzle-orm@~0.45.1"
       ]
@@ -873,7 +865,6 @@
       "workers/shared": {
         "dependencies": [
           "jsr:@grammyjs/grammy@^2.0.0-beta.3",
-          "npm:@cloudflare/workers-types@^4.20260214.0",
           "npm:@opentelemetry/api@^1.9.0",
           "npm:drizzle-kit@~0.31.9",
           "npm:drizzle-orm@~0.45.1"

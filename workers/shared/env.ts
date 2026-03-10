@@ -1,4 +1,4 @@
-import type { D1Database, R2Bucket } from "@cloudflare/workers-types";
+import type { D1Database, Queue, R2Bucket } from "./types/cloudflare.ts";
 
 export interface Env {
   readonly DB: D1Database;
