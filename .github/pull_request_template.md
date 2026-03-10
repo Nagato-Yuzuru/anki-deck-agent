@@ -28,18 +28,22 @@ Closes #
 <!-- 🤖 For AI agents: Record design decisions made, alternatives considered, and rationale for changes -->
 
 ### Design Decisions
-- [Decision 1]: [rationale]
-- [Decision 2]: [rationale]
+
+- Decision 1: rationale
+- Decision 2: rationale
 
 ### Alternatives Considered
+
 - Alternative A: [why not chosen]
 - Alternative B: [why not chosen]
 
 ### Files Modified (Rationale)
+
 - `file1.ts`: [why this change was necessary]
 - `file2.ts`: [why this change was necessary]
 
 ### Notes for Reviewers
+
 - [Any special considerations for review]
 - [Edge cases handled]
 - [Known limitations]

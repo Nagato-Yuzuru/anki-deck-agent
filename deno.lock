@@ -9,7 +9,6 @@
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/testing@1": "1.0.17",
     "jsr:@zod/zod@^4.3.6": "4.3.6",
-    "npm:@cloudflare/ai@^1.2.2": "1.2.2",
     "npm:@cloudflare/workers-types@^4.20260214.0": "4.20260214.0",
     "npm:@opentelemetry/api@^1.9.0": "1.9.0",
     "npm:drizzle-kit@*": "0.31.9_esbuild@0.25.12",
@@ -62,10 +61,6 @@
         "@csstools/css-tokenizer",
         "lru-cache"
       ]
-    },
-    "@cloudflare/ai@1.2.2": {
-      "integrity": "sha512-dT4gUPKWUERoTHHrbUrhJBIP8P9k6qybw5fK4bnqSAyTL9AvU98D7z6SOT/BwvmOhYA8hzBGNRbQsXyvxniGyA==",
-      "deprecated": true
     },
     "@cloudflare/workers-types@4.20260214.0": {
       "integrity": "sha512-qb8rgbAdJR4BAPXolXhFL/wuGtecHLh1veOyZ1mK6QqWuCdI3vK1biKC0i3lzmzdLR/DZvsN3mNtpUE8zpWGEg=="
@@ -878,7 +873,6 @@
       "workers/shared": {
         "dependencies": [
           "jsr:@grammyjs/grammy@^2.0.0-beta.3",
-          "npm:@cloudflare/ai@^1.2.2",
           "npm:@cloudflare/workers-types@^4.20260214.0",
           "npm:@opentelemetry/api@^1.9.0",
           "npm:drizzle-kit@~0.31.9",
