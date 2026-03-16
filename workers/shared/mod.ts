@@ -11,7 +11,7 @@ export type { CardTemplate } from "./domain/card_template.ts";
 export type { NewSubmission, Submission, SubmissionUpdateFields } from "./domain/submission.ts";
 export type { LlmError, NotificationError, QueueError, RepositoryError, TtsError } from "./domain/errors.ts";
 
-// DB schema
+// DB schema (adapter-only)
 export { cards, cardTemplates, submissions, users } from "./db/schema.ts";
 export type {
   InsertCard,
@@ -26,7 +26,15 @@ export type {
 
 // Queue contracts
 export { GenerateCardMessage, QueueMessage } from "./ports/queue.ts";
+
+// Port interfaces
 export type { QueuePort } from "./ports/queue.ts";
+export type { LlmPort } from "./ports/llm.ts";
+export type { TtsPort } from "./ports/tts.ts";
+export type { ChatNotificationPort } from "./ports/chat_notification.ts";
+export type { CardRepositoryPort } from "./ports/card_repository.ts";
+export type { SubmissionRepositoryPort } from "./ports/submission_repository.ts";
+export type { UserRepositoryPort } from "./ports/user_repository.ts";
 
 // Env bindings
 export type { ApiEnv, BaseEnv, ProcessorEnv } from "./env.ts";
