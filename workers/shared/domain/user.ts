@@ -6,3 +6,5 @@ export type User = {
   readonly languageCode: Language | null;
   readonly createdAt: string;
 };
+
+export type NewUser = Omit<User, "createdAt">;

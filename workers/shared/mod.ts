@@ -1,25 +1,26 @@
 // Domain
-export type { DeckStatus } from "./domain/deck_status.ts";
-export { DECK_STATUS, DECK_STATUSES } from "./domain/deck_status.ts";
 export type { CardStatus } from "./domain/card_status.ts";
 export { CARD_STATUS, CARD_STATUSES } from "./domain/card_status.ts";
+export type { SubmissionStatus } from "./domain/submission_status.ts";
+export { SUBMISSION_STATUS, SUBMISSION_STATUSES } from "./domain/submission_status.ts";
 export type { Language } from "./domain/language.ts";
 export { LANGUAGE, LANGUAGES } from "./domain/language.ts";
-export type { User } from "./domain/user.ts";
-export type { Card } from "./domain/card.ts";
+export type { NewUser, User } from "./domain/user.ts";
+export type { Card, CardUpdateFields, NewCard } from "./domain/card.ts";
 export type { CardTemplate } from "./domain/card_template.ts";
-export type { Deck } from "./domain/deck.ts";
+export type { NewSubmission, Submission, SubmissionUpdateFields } from "./domain/submission.ts";
+export type { LlmError, NotificationError, QueueError, RepositoryError, TtsError } from "./domain/errors.ts";
 
 // DB schema
-export { cards, cardTemplates, decks, users } from "./db/schema.ts";
+export { cards, cardTemplates, submissions, users } from "./db/schema.ts";
 export type {
   InsertCard,
   InsertCardTemplate,
-  InsertDeck,
+  InsertSubmission,
   InsertUser,
   SelectCard,
   SelectCardTemplate,
-  SelectDeck,
+  SelectSubmission,
   SelectUser,
 } from "./db/schema.ts";
 
