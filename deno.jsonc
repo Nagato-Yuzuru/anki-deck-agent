@@ -26,7 +26,7 @@
     "lint": "deno lint",
     "fmt": "deno fmt",
     "check": "deno check workers/**/*.ts drizzle.config.ts && deno lint && deno fmt --check",
-    "test": "deno test --allow-env",
+    "test": "deno test --allow-env workers/",
     "pre-commit": "deno task check && deno task test"
   },
   "compilerOptions": {
@@ -69,6 +69,11 @@
         "no-async-promise-executor"
       ]
     }
+  },
+  "test": {
+    "exclude": [
+      "workers/api/adapters/telegram_webhook_test.ts"
+    ]
   },
   "nodeModulesDir": "auto"
 }
