@@ -1,8 +1,8 @@
 import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import type { CardStatus } from "../domain/card_status.ts";
-import type { DeckStatus } from "../domain/deck_status.ts";
 import type { Language } from "../domain/language.ts";
+import type { SubmissionStatus } from "../domain/submission_status.ts";
 
 export const users = sqliteTable("users", {
   telegramId: integer("telegram_id").primaryKey(),
@@ -22,13 +22,13 @@ export const cardTemplates = sqliteTable("card_templates", {
   createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
 });
 
-export const decks = sqliteTable("decks", {
+export const submissions = sqliteTable("submissions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").notNull().references(() => users.telegramId),
   templateId: integer("template_id").notNull().references(() => cardTemplates.id),
-  status: text("status").$type<DeckStatus>().notNull().default("pending"),
-  telegramChatId: integer("telegram_chat_id").notNull(),
-  telegramMessageId: integer("telegram_message_id").notNull(),
+  chatId: text("chat_id").notNull(),
+  messageId: text("message_id").notNull(),
+  status: text("status").$type<SubmissionStatus>().notNull().default("pending"),
   errorMessage: text("error_message"),
   createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
   updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
@@ -36,20 +36,22 @@ export const decks = sqliteTable("decks", {
 
 export const cards = sqliteTable("cards", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  deckId: integer("deck_id").notNull().references(() => decks.id),
+  submissionId: integer("submission_id").notNull().references(() => submissions.id),
   word: text("word").notNull(),
   sentence: text("sentence").notNull(),
   status: text("status").$type<CardStatus>().notNull().default("pending"),
+  llmResponseJson: text("llm_response_json"),
   audioR2Key: text("audio_r2_key"),
-  ankiNoteId: integer("anki_note_id"),
+  errorMessage: text("error_message"),
   createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
 });
 
 export type SelectUser = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type SelectCardTemplate = typeof cardTemplates.$inferSelect;
 export type InsertCardTemplate = typeof cardTemplates.$inferInsert;
-export type SelectDeck = typeof decks.$inferSelect;
-export type InsertDeck = typeof decks.$inferInsert;
+export type SelectSubmission = typeof submissions.$inferSelect;
+export type InsertSubmission = typeof submissions.$inferInsert;
 export type SelectCard = typeof cards.$inferSelect;
 export type InsertCard = typeof cards.$inferInsert;

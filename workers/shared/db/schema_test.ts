@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
 import { getTableColumns, getTableName } from "drizzle-orm";
-import { cards, cardTemplates, decks, users } from "./schema.ts";
+import { cards, cardTemplates, submissions, users } from "./schema.ts";
 
 describe("D1 Schema", () => {
   describe("users table", () => {
@@ -35,20 +35,20 @@ describe("D1 Schema", () => {
     });
   });
 
-  describe("decks table", () => {
-    it("should be named 'decks'", () => {
-      assertEquals(getTableName(decks), "decks");
+  describe("submissions table", () => {
+    it("should be named 'submissions'", () => {
+      assertEquals(getTableName(submissions), "submissions");
     });
 
     it("should have the expected columns", () => {
-      const cols = Object.keys(getTableColumns(decks)).sort();
+      const cols = Object.keys(getTableColumns(submissions)).sort();
       assertEquals(cols, [
+        "chatId",
         "createdAt",
         "errorMessage",
         "id",
+        "messageId",
         "status",
-        "telegramChatId",
-        "telegramMessageId",
         "templateId",
         "updatedAt",
         "userId",
@@ -64,13 +64,15 @@ describe("D1 Schema", () => {
     it("should have the expected columns", () => {
       const cols = Object.keys(getTableColumns(cards)).sort();
       assertEquals(cols, [
-        "ankiNoteId",
         "audioR2Key",
         "createdAt",
-        "deckId",
+        "errorMessage",
         "id",
+        "llmResponseJson",
         "sentence",
         "status",
+        "submissionId",
+        "updatedAt",
         "word",
       ]);
     });

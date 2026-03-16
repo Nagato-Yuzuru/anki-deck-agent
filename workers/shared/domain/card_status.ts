@@ -1,7 +1,9 @@
 export const CARD_STATUS = {
   PENDING: "pending",
+  GENERATING: "generating",
   READY: "ready",
-  SYNCED: "synced",
+  EXPORTED: "exported",
+  FAILED: "failed",
 } as const;
 
 export type CardStatus = typeof CARD_STATUS[keyof typeof CARD_STATUS];
