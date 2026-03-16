@@ -20,7 +20,7 @@ jobs:
           deno-version: lts
 
       - name: Cache Deno dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.deno
@@ -48,7 +48,7 @@ jobs:
           deno-version: lts
 
       - name: Cache Deno dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.deno
@@ -74,7 +74,7 @@ jobs:
         uses: opentofu/setup-opentofu@v1
 
       - name: Cache OpenTofu plugins and modules
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.terraform
