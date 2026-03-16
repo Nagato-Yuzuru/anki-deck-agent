@@ -12,23 +12,25 @@ CREATE TABLE `card_templates` (
 CREATE UNIQUE INDEX `card_templates_name_unique` ON `card_templates` (`name`);--> statement-breakpoint
 CREATE TABLE `cards` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`deck_id` integer NOT NULL,
+	`submission_id` integer NOT NULL,
 	`word` text NOT NULL,
 	`sentence` text NOT NULL,
 	`status` text DEFAULT 'pending' NOT NULL,
+	`llm_response_json` text,
 	`audio_r2_key` text,
-	`anki_note_id` integer,
+	`error_message` text,
 	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
-	FOREIGN KEY (`deck_id`) REFERENCES `decks`(`id`) ON UPDATE no action ON DELETE no action
+	`updated_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+	FOREIGN KEY (`submission_id`) REFERENCES `submissions`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE TABLE `decks` (
+CREATE TABLE `submissions` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`user_id` integer NOT NULL,
 	`template_id` integer NOT NULL,
+	`chat_id` text NOT NULL,
+	`message_id` text NOT NULL,
 	`status` text DEFAULT 'pending' NOT NULL,
-	`telegram_chat_id` integer NOT NULL,
-	`telegram_message_id` integer NOT NULL,
 	`error_message` text,
 	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`updated_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
