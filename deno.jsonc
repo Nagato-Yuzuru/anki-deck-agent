@@ -1,6 +1,7 @@
 {
   "workspace": [
-    "./workers/shared/"
+    "./workers/shared/",
+    "./workers/api/"
   ],
   "imports": {
     "@cloudflare/workers-types": "npm:@cloudflare/workers-types@^4.20260214.0",
@@ -11,7 +12,10 @@
     "@std/": "jsr:@std/",
     "drizzle-kit": "npm:drizzle-kit@^0.31.9",
     "drizzle-orm": "npm:drizzle-orm@^0.45.1",
+    "drizzle-orm/d1": "npm:drizzle-orm@^0.45.1/d1",
     "drizzle-orm/sqlite-core": "npm:drizzle-orm@^0.45.1/sqlite-core",
+    "grammy": "npm:grammy@^1",
+    "grammy/types": "npm:grammy@^1/types",
     "neverthrow": "npm:neverthrow@^8.1.1"
   },
   "tasks": {
@@ -22,7 +26,8 @@
     "lint": "deno lint",
     "fmt": "deno fmt",
     "check": "deno check workers/**/*.ts drizzle.config.ts && deno lint && deno fmt --check",
-    "pre-commit": "deno task check && deno test"
+    "test": "deno test --allow-env",
+    "pre-commit": "deno task check && deno task test"
   },
   "compilerOptions": {
     "strict": true,
