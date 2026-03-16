@@ -25,7 +25,8 @@ export type {
 } from "./db/schema.ts";
 
 // Queue contracts
-export { GenerateDeckMessage, QueueMessage } from "./ports/queue.ts";
+export { GenerateCardMessage, QueueMessage } from "./ports/queue.ts";
+export type { QueuePort } from "./ports/queue.ts";
 
 // Env bindings
 export type { Env } from "./env.ts";
