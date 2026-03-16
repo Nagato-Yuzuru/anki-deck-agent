@@ -29,4 +29,4 @@ export { GenerateCardMessage, QueueMessage } from "./ports/queue.ts";
 export type { QueuePort } from "./ports/queue.ts";
 
 // Env bindings
-export type { Env } from "./env.ts";
+export type { ApiEnv, BaseEnv, ProcessorEnv } from "./env.ts";

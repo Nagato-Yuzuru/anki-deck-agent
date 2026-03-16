@@ -20,6 +20,9 @@
       "bucket_name": "prod-assets-bucket"
     }
   ],
+  "ai": {
+    "binding": "AI"
+  },
   "queues": {
     "consumers": [
       {
