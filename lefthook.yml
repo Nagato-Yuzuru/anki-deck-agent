@@ -1,3 +1,8 @@
+commit-msg:
+  commands:
+    conventional-commits:
+      run: cog verify "$(cat {1})"
+
 pre-commit:
   piped: true
   commands:

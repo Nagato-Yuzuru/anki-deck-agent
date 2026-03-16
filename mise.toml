@@ -1,4 +1,5 @@
 [tools]
+cocogitto = "latest"
 deno = "latest"
 just = "latest"
 lefthook = "latest"
