@@ -22,10 +22,15 @@ jobs:
       - name: Cache Deno dependencies
         uses: actions/cache@v4
         with:
-          path: ~/.deno
+          path: |
+            ~/.deno
+            node_modules
           key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
           restore-keys: |
             deno-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: deno install
 
       - name: Run check (type-check + lint + format)
         run: deno task check
@@ -45,10 +50,15 @@ jobs:
       - name: Cache Deno dependencies
         uses: actions/cache@v4
         with:
-          path: ~/.deno
+          path: |
+            ~/.deno
+            node_modules
           key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
           restore-keys: |
             deno-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: deno install
 
       - name: Run tests
         run: deno test

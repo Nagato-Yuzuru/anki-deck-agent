@@ -1,5 +1,5 @@
 [tools]
-deno = "2.6.8"      # 2.6.9 has a bug(Issue #32123) about drizzle-kit
+deno = "latest"
 just = "latest"
 opentofu = "latest"
 wrangler = "latest"
