@@ -1,0 +1,16 @@
+pre-commit:
+  piped: true
+  commands:
+    fmt-deno:
+      run: deno fmt
+      stage_fixed: true
+
+    fmt-tofu:
+      run: tofu fmt -recursive infra/
+      stage_fixed: true
+
+    check:
+      run: deno task check
+      skip:
+        - merge
+        - rebase

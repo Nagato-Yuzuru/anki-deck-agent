@@ -1,5 +1,6 @@
 [tools]
 deno = "latest"
 just = "latest"
+lefthook = "latest"
 opentofu = "latest"
 wrangler = "latest"

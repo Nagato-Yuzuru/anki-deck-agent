@@ -10,7 +10,7 @@ terraform {
 variable "account_id" { type = string }
 variable "bucket_name" { type = string }
 variable "location" {
-  type    = string
+  type = string
 }
 
 resource "cloudflare_r2_bucket" "this" {
