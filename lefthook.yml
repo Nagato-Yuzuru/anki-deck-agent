@@ -2,14 +2,17 @@ pre-commit:
   piped: true
   commands:
     fmt-deno:
+      priority: 1
       run: deno fmt
       stage_fixed: true
 
     fmt-tofu:
+      priority: 2
       run: tofu fmt -recursive infra/
       stage_fixed: true
 
     check:
+      priority: 3
       run: deno task check
       skip:
         - merge
