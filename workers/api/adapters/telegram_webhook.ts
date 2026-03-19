@@ -43,7 +43,9 @@ export async function handleWebhook(
   const deps = options?.deps ?? buildDeps(env);
   registerAddCommand(bot, deps);
 
-  const handler = webhookCallback(bot, "cloudflare-mod");
+  const handler = webhookCallback(bot, "cloudflare-mod", {
+    secretToken: env.TELEGRAM_WEBHOOK_SECRET,
+  });
   return handler(req);
 }
 
@@ -84,7 +86,7 @@ function registerAddCommand(bot: Bot, deps: SubmitWordDeps): void {
     await result.match(
       async (val) => {
         if (val.isNew) {
-          await ctx.reply(`Generating card for "${parsed.word}"...`);
+          await ctx.reply(`⏳ Generating card for "${parsed.word}"...`);
         } else {
           await ctx.reply(`Card for "${parsed.word}" already exists (status: ${val.existingStatus}).`);
         }

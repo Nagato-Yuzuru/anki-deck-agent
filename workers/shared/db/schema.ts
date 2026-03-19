@@ -1,4 +1,3 @@
-import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import type { CardStatus } from "../domain/card_status.ts";
 import type { Language } from "../domain/language.ts";
@@ -8,7 +7,7 @@ export const users = sqliteTable("users", {
   telegramId: integer("telegram_id").primaryKey(),
   firstName: text("first_name").notNull(),
   languageCode: text("language_code").$type<Language>(),
-  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 export const cardTemplates = sqliteTable("card_templates", {
@@ -19,7 +18,7 @@ export const cardTemplates = sqliteTable("card_templates", {
   ankiNoteType: text("anki_note_type").notNull(),
   ankiFieldsMapping: text("anki_fields_mapping").notNull(),
   isActive: integer("is_active").notNull().default(1),
-  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 export const submissions = sqliteTable("submissions", {
@@ -30,8 +29,8 @@ export const submissions = sqliteTable("submissions", {
   messageId: text("message_id").notNull(),
   status: text("status").$type<SubmissionStatus>().notNull().default("pending"),
   errorMessage: text("error_message"),
-  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
-  updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 export const cards = sqliteTable("cards", {
@@ -43,8 +42,8 @@ export const cards = sqliteTable("cards", {
   llmResponseJson: text("llm_response_json"),
   audioR2Key: text("audio_r2_key"),
   errorMessage: text("error_message"),
-  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
-  updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 export type SelectUser = typeof users.$inferSelect;

@@ -8,6 +8,7 @@ export function mockApiEnv(overrides?: Partial<ApiEnv>): ApiEnv {
     ASSETS: {} as R2Bucket,
     TELEGRAM_BOT_TOKEN: "test-bot-token",
     EVENTS: { send: () => Promise.resolve() } as unknown as Queue,
+    TELEGRAM_WEBHOOK_SECRET: "test-webhook-secret",
     ...overrides,
   };
 }
