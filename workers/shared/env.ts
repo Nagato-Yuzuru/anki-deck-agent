@@ -8,6 +8,7 @@ export interface BaseEnv {
 
 export interface ApiEnv extends BaseEnv {
   readonly EVENTS: Queue;
+  readonly TELEGRAM_WEBHOOK_SECRET: string;
 }
 
 export interface ProcessorEnv extends BaseEnv {
