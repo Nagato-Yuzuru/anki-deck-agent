@@ -12,7 +12,9 @@ export interface ApiEnv extends BaseEnv {
 }
 
 export interface ProcessorEnv extends BaseEnv {
-  readonly AI: Ai;
+  readonly AI_GATEWAY_URL: string;
+  readonly OPENAI_API_KEY: string;
+  readonly LLM_MODEL: string;
   readonly TTS_API_URL: string;
   readonly TTS_API_KEY: string;
 }
