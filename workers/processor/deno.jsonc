@@ -1,0 +1,4 @@
+{
+  "name": "@anki/processor",
+  "exports": "./index.ts"
+}

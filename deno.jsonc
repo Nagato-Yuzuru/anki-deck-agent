@@ -1,7 +1,8 @@
 {
   "workspace": [
     "./workers/shared/",
-    "./workers/api/"
+    "./workers/api/",
+    "./workers/processor/"
   ],
   "imports": {
     "@cloudflare/workers-types": "npm:@cloudflare/workers-types@^4.20260214.0",
