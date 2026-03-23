@@ -4,13 +4,18 @@ import { D1CardRepository } from "../shared/adapters/d1_card_repository.ts";
 import { D1SubmissionRepository } from "../shared/adapters/d1_submission_repository.ts";
 import { D1TemplateRepository } from "../shared/adapters/d1_template_repository.ts";
 import { createOpenAiLlm } from "./adapters/openai_llm.ts";
+import { createTelegramNotification } from "./adapters/telegram_notification.ts";
 import { generateCard } from "./services/generate_card.ts";
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 export default {
   async queue(
     batch: MessageBatch<QueueMessage>,
     env: ProcessorEnv,
-    _ctx: ExecutionContext,
+    ctx: ExecutionContext,
   ): Promise<void> {
     const deps = {
       cardRepo: new D1CardRepository(env.DB),
@@ -22,6 +27,10 @@ export default {
         model: env.LLM_MODEL,
       }),
     };
+
+    const notification = createTelegramNotification({
+      botToken: env.TELEGRAM_BOT_TOKEN,
+    });
 
     // Sequential processing is intentional — avoid overwhelming D1/LLM with concurrent requests.
     for (const msg of batch.messages) {
@@ -37,23 +46,37 @@ export default {
 
             // deno-lint-ignore no-await-in-loop
             const result = await generateCard(msg.body.cardId, deps);
-            result.match(
-              () => {
-                console.log({
-                  event: "card_generated",
-                  cardId: msg.body.cardId,
-                  durationMs: Date.now() - startTime,
-                });
-              },
-              (err) => {
-                console.error({
-                  event: "card_generation_failed",
-                  cardId: msg.body.cardId,
-                  error: err.message,
-                  durationMs: Date.now() - startTime,
-                });
-              },
-            );
+            const durationMs = Date.now() - startTime;
+
+            if (result.isOk()) {
+              const res = result.value;
+              const logEntry: Record<string, unknown> = {
+                event: res.succeeded ? "card_generated" : "card_generation_failed",
+                cardId: msg.body.cardId,
+                word: res.word,
+                succeeded: res.succeeded,
+                durationMs,
+              };
+
+              if (!res.succeeded && res.errorMessage) {
+                logEntry.errorMessage = res.errorMessage;
+              }
+
+              console.log(logEntry);
+
+              const text = res.succeeded
+                ? `✅ Card ready for <b>${escapeHtml(res.word)}</b>`
+                : `❌ Failed to generate card for <b>${escapeHtml(res.word)}</b>`;
+
+              ctx.waitUntil(notification.editMessage(res.chatId, res.messageId, text));
+            } else {
+              console.error({
+                event: "card_generation_failed",
+                cardId: msg.body.cardId,
+                error: result.error.message,
+                durationMs,
+              });
+            }
             break;
           }
           default:
