@@ -11,7 +11,7 @@ describe("D1 Schema", () => {
 
     it("should have the expected columns", () => {
       const cols = Object.keys(getTableColumns(users)).sort();
-      assertEquals(cols, ["createdAt", "firstName", "languageCode", "telegramId"]);
+      assertEquals(cols, ["activeTemplateId", "createdAt", "firstName", "languageCode", "telegramId"]);
     });
   });
 
