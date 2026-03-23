@@ -8,3 +8,5 @@ export type CardTemplate = {
   readonly isActive: boolean;
   readonly createdAt: string;
 };
+
+export type NewCardTemplate = Omit<CardTemplate, "id" | "createdAt">;

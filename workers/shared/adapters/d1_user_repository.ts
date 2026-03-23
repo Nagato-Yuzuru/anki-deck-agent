@@ -33,6 +33,7 @@ export class D1UserRepository implements UserRepositoryPort {
             telegramId: row.telegramId,
             firstName: row.firstName,
             languageCode: row.languageCode,
+            activeTemplateId: null,
             createdAt: row.createdAt,
           };
         }),

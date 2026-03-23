@@ -10,6 +10,11 @@ export type { Card, CardUpdateFields, NewCard } from "./domain/card.ts";
 export type { CardTemplate } from "./domain/card_template.ts";
 export type { NewSubmission, Submission, SubmissionUpdateFields } from "./domain/submission.ts";
 export type { LlmError, NotificationError, QueueError, RepositoryError, TtsError } from "./domain/errors.ts";
+export type { ReadyCard } from "./domain/ready_card.ts";
+export type { NewCardTemplate } from "./domain/card_template.ts";
+export type { ExportError } from "./domain/errors.ts";
+export { classifyError } from "./domain/errors.ts";
+export type { ErrorClassification } from "./domain/errors.ts";
 
 // DB schema (adapter-only)
 export { cards, cardTemplates, submissions, users } from "./db/schema.ts";

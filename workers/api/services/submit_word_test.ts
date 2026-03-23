@@ -16,7 +16,13 @@ import { submitWord, type SubmitWordResult } from "./submit_word.ts";
 function mockUserRepo(overrides?: Partial<UserRepositoryPort>): UserRepositoryPort {
   return {
     upsert: () =>
-      okAsync({ telegramId: 100, firstName: "Test", languageCode: null, createdAt: "2026-01-01T00:00:00Z" }),
+      okAsync({
+        telegramId: 100,
+        firstName: "Test",
+        languageCode: null,
+        activeTemplateId: null,
+        createdAt: "2026-01-01T00:00:00Z",
+      }),
     ...overrides,
   };
 }
