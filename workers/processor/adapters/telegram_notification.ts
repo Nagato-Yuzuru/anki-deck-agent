@@ -28,14 +28,26 @@ export function createTelegramNotification(config: TelegramNotificationConfig): 
         message: `Fetch failed: ${err instanceof Error ? err.message : String(err)}`,
       }),
     ).andThen((response) => {
-      if (!response.ok) {
+      if (response.ok) {
+        console.log({ event: "notification_sent", chatId, messageId });
+        return okAsync(undefined);
+      }
+
+      return ResultAsync.fromPromise(
+        response.text(),
+        (err): NotificationError => ({
+          kind: "notification",
+          message: `HTTP ${response.status} (failed to read body: ${
+            err instanceof Error ? err.message : String(err)
+          })`,
+        }),
+      ).andThen((bodyText) => {
+        const truncatedBody = bodyText.length > 500 ? `${bodyText.slice(0, 500)}...` : bodyText;
         return errAsync<void, NotificationError>({
           kind: "notification",
-          message: `HTTP ${response.status}`,
+          message: `HTTP ${response.status}: ${truncatedBody}`,
         });
-      }
-      console.log({ event: "notification_sent", chatId, messageId });
-      return okAsync(undefined);
+      });
     });
   }
 
