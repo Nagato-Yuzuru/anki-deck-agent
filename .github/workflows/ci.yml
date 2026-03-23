@@ -15,7 +15,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Check conventional commits
-        uses: cocogitto/cocogitto-action@v3
+        uses: cocogitto/cocogitto-action@v4
+        with:
+          command: check
 
   check:
     name: Type-check, Lint, Format
