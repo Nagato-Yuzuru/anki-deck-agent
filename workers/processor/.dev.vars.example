@@ -1,3 +1,6 @@
-TELEGRAM_BOT_TOKEN=
-TTS_API_URL=
-TTS_API_KEY=
+TELEGRAM_BOT_TOKEN=your-bot-token
+AI_GATEWAY_URL=https://gateway.ai.cloudflare.com/v1/ACCOUNT_ID/GATEWAY_ID/openai
+OPENAI_API_KEY=sk-your-key
+LLM_MODEL=gpt-4o
+TTS_API_URL=https://tts.example.com
+TTS_API_KEY=your-tts-key
