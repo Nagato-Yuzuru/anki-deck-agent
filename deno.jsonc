@@ -24,6 +24,7 @@
     "dev:processor": "wrangler dev --config workers/processor/wrangler.jsonc",
     "db:generate": "deno run -A npm:drizzle-kit generate",
     "db:migrate": "deno run -A npm:drizzle-kit migrate",
+    "db:seed": "wrangler d1 execute anki-deck-db --local --file workers/shared/db/seed.sql",
     "lint": "deno lint",
     "fmt": "deno fmt",
     "check": "deno check workers/**/*.ts drizzle.config.ts && deno lint && deno fmt --check",
