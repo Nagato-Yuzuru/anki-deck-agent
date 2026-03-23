@@ -1,12 +1,17 @@
 # M3: Card Generation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or
+> superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement the processor worker that consumes `generate_card` queue messages, calls an LLM via Cloudflare AI Gateway, and stores structured card data in D1.
+**Goal:** Implement the processor worker that consumes `generate_card` queue messages, calls an LLM via Cloudflare AI
+Gateway, and stores structured card data in D1.
 
-**Architecture:** Queue consumer routes messages by type, delegates to a `generateCard` service that orchestrates card lookup, prompt construction, LLM call, and status updates. All external dependencies are injected via ports. The OpenAI LLM adapter uses AI Gateway as a proxy.
+**Architecture:** Queue consumer routes messages by type, delegates to a `generateCard` service that orchestrates card
+lookup, prompt construction, LLM call, and status updates. All external dependencies are injected via ports. The OpenAI
+LLM adapter uses AI Gateway as a proxy.
 
-**Tech Stack:** Deno, Cloudflare Workers (Queues consumer), neverthrow, Drizzle ORM, OpenAI Chat Completions API via AI Gateway.
+**Tech Stack:** Deno, Cloudflare Workers (Queues consumer), neverthrow, Drizzle ORM, OpenAI Chat Completions API via AI
+Gateway.
 
 **Spec:** `docs/superpowers/specs/2026-03-23-m3-card-generation-design.md`
 
@@ -16,34 +21,35 @@
 
 ### New Files
 
-| File | Responsibility |
-|------|---------------|
-| `workers/shared/ports/template_repository.ts` | Port interface for CardTemplate lookups |
-| `workers/shared/adapters/d1_template_repository.ts` | D1/Drizzle adapter implementing TemplateRepositoryPort |
-| `workers/shared/adapters/d1_template_repository_test.ts` | Tests for D1 template repository (toDomain mapping) |
-| `workers/processor/index.ts` | Processor worker entry point — queue consumer |
-| `workers/processor/index_test.ts` | Tests for processor queue consumer |
-| `workers/processor/services/generate_card.ts` | generateCard service — pure business logic |
-| `workers/processor/services/generate_card_test.ts` | Tests for generateCard service |
-| `workers/processor/adapters/openai_llm.ts` | OpenAI LLM adapter via AI Gateway |
-| `workers/processor/adapters/openai_llm_test.ts` | Tests for OpenAI LLM adapter |
+| File                                                     | Responsibility                                         |
+| -------------------------------------------------------- | ------------------------------------------------------ |
+| `workers/shared/ports/template_repository.ts`            | Port interface for CardTemplate lookups                |
+| `workers/shared/adapters/d1_template_repository.ts`      | D1/Drizzle adapter implementing TemplateRepositoryPort |
+| `workers/shared/adapters/d1_template_repository_test.ts` | Tests for D1 template repository (toDomain mapping)    |
+| `workers/processor/index.ts`                             | Processor worker entry point — queue consumer          |
+| `workers/processor/index_test.ts`                        | Tests for processor queue consumer                     |
+| `workers/processor/services/generate_card.ts`            | generateCard service — pure business logic             |
+| `workers/processor/services/generate_card_test.ts`       | Tests for generateCard service                         |
+| `workers/processor/adapters/openai_llm.ts`               | OpenAI LLM adapter via AI Gateway                      |
+| `workers/processor/adapters/openai_llm_test.ts`          | Tests for OpenAI LLM adapter                           |
 
 ### Modified Files
 
-| File | Change |
-|------|--------|
-| `workers/shared/ports/llm.ts` | Remove generic `<T>`, return `unknown` |
-| `workers/shared/env.ts` | Replace `AI: Ai` with `AI_GATEWAY_URL`, `OPENAI_API_KEY`, `LLM_MODEL` |
-| `workers/shared/mod.ts` | Add `TemplateRepositoryPort` export |
-| `workers/processor/deno.jsonc` | Add workspace member config (name, exports) |
-| `workers/processor/wrangler.jsonc` | Remove `ai` binding, add env vars to `.dev.vars.example` |
-| `deno.jsonc` | Add `./workers/processor/` to workspace array |
+| File                               | Change                                                                |
+| ---------------------------------- | --------------------------------------------------------------------- |
+| `workers/shared/ports/llm.ts`      | Remove generic `<T>`, return `unknown`                                |
+| `workers/shared/env.ts`            | Replace `AI: Ai` with `AI_GATEWAY_URL`, `OPENAI_API_KEY`, `LLM_MODEL` |
+| `workers/shared/mod.ts`            | Add `TemplateRepositoryPort` export                                   |
+| `workers/processor/deno.jsonc`     | Add workspace member config (name, exports)                           |
+| `workers/processor/wrangler.jsonc` | Remove `ai` binding, add env vars to `.dev.vars.example`              |
+| `deno.jsonc`                       | Add `./workers/processor/` to workspace array                         |
 
 ---
 
 ## Task 1: Workspace Setup for Processor
 
 **Files:**
+
 - Modify: `deno.jsonc:2-4` (workspace array)
 - Modify: `workers/processor/deno.jsonc`
 - Modify: `workers/processor/wrangler.jsonc:22-24` (remove ai binding)
@@ -112,6 +118,7 @@ git commit -m "chore(processor): add processor to Deno workspace, remove AI bind
 ## Task 2: Update Shared Layer (LlmPort, ProcessorEnv, TemplateRepositoryPort)
 
 **Files:**
+
 - Modify: `workers/shared/ports/llm.ts`
 - Modify: `workers/shared/env.ts:14-18`
 - Create: `workers/shared/ports/template_repository.ts`
@@ -183,6 +190,7 @@ git commit -m "feat(shared): update LlmPort/ProcessorEnv, add TemplateRepository
 ## Task 3: D1 Template Repository Adapter + Tests
 
 **Files:**
+
 - Create: `workers/shared/adapters/d1_template_repository.ts`
 - Create: `workers/shared/adapters/d1_template_repository_test.ts`
 
@@ -190,10 +198,9 @@ git commit -m "feat(shared): update LlmPort/ProcessorEnv, add TemplateRepository
 
 Create `workers/shared/adapters/d1_template_repository_test.ts`.
 
-The existing D1 adapters (`d1_card_repository.ts`, `d1_submission_repository.ts`) have no
-unit tests because mocking Drizzle's internal query builder is complex and fragile.
-Follow the same pattern: test the `toDomain` mapping logic (the only non-trivial code)
-via a static method, and rely on service-level tests for integration.
+The existing D1 adapters (`d1_card_repository.ts`, `d1_submission_repository.ts`) have no unit tests because mocking
+Drizzle's internal query builder is complex and fragile. Follow the same pattern: test the `toDomain` mapping logic (the
+only non-trivial code) via a static method, and rely on service-level tests for integration.
 
 ```typescript
 import { assertEquals } from "@std/assert";
@@ -242,7 +249,8 @@ describe("D1TemplateRepository", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/shared/adapters/d1_template_repository_test.ts`
+Run:
+`cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/shared/adapters/d1_template_repository_test.ts`
 Expected: FAIL — module `./d1_template_repository.ts` not found or `toDomain` not a static method.
 
 - [ ] **Step 3: Write the D1 adapter implementation**
@@ -292,13 +300,14 @@ export class D1TemplateRepository implements TemplateRepositoryPort {
 }
 ```
 
-Note: `toDomain` is a `static` method (unlike the private instance method in
-`d1_card_repository.ts`) so it can be tested directly without mocking Drizzle.
-The `isActive` column is `integer` in SQLite (0/1), converted to `boolean` here.
+Note: `toDomain` is a `static` method (unlike the private instance method in `d1_card_repository.ts`) so it can be
+tested directly without mocking Drizzle. The `isActive` column is `integer` in SQLite (0/1), converted to `boolean`
+here.
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/shared/adapters/d1_template_repository_test.ts`
+Run:
+`cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/shared/adapters/d1_template_repository_test.ts`
 Expected: PASS (2 tests).
 
 - [ ] **Step 5: Commit**
@@ -313,6 +322,7 @@ git commit -m "feat(shared): D1 template repository adapter with tests"
 ## Task 4: Processor Queue Consumer Skeleton (#12)
 
 **Files:**
+
 - Create: `workers/processor/index.ts`
 - Create: `workers/processor/index_test.ts`
 
@@ -400,8 +410,8 @@ Expected: FAIL — module `./index.ts` not found or no default export.
 Create `workers/processor/index.ts`:
 
 ```typescript
-import type { MessageBatch, ExecutionContext } from "@cloudflare/workers-types";
-import type { QueueMessage, ProcessorEnv } from "../shared/mod.ts";
+import type { ExecutionContext, MessageBatch } from "@cloudflare/workers-types";
+import type { ProcessorEnv, QueueMessage } from "../shared/mod.ts";
 
 export default {
   async queue(
@@ -431,8 +441,8 @@ Expected: PASS (all 3 tests).
 
 - [ ] **Step 5: Run full check**
 
-Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno task check`
-Expected: No lint/fmt/type errors.
+Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno task check` Expected: No
+lint/fmt/type errors.
 
 - [ ] **Step 6: Commit**
 
@@ -446,6 +456,7 @@ git commit -m "feat(processor): queue consumer skeleton with message routing (#1
 ## Task 5: generateCard Service + Tests (#13)
 
 **Files:**
+
 - Create: `workers/processor/services/generate_card.ts`
 - Create: `workers/processor/services/generate_card_test.ts`
 
@@ -514,8 +525,7 @@ function mockCardRepo(overrides?: Partial<CardRepositoryPort>): CardRepositoryPo
     findBySubmissionId: () => okAsync([]),
     findActiveByUserIdAndWord: () => okAsync(null),
     create: (_c: NewCard) => okAsync(sampleCard),
-    updateStatus: (_id, _status, _fields?) =>
-      okAsync({ ...sampleCard, status: _status, ..._fields }),
+    updateStatus: (_id, _status, _fields?) => okAsync({ ...sampleCard, status: _status, ..._fields }),
     ...overrides,
   };
 }
@@ -557,14 +567,17 @@ describe("generateCard", () => {
   it("happy path: fetches card, builds prompt, calls LLM, updates status to ready", async () => {
     const statusUpdates: { status: string; fields?: unknown }[] = [];
 
-    const result = await generateCard(1, makeDeps({
-      cardRepo: mockCardRepo({
-        updateStatus: (id, status, fields?) => {
-          statusUpdates.push({ status, fields });
-          return okAsync({ ...sampleCard, status, ...fields });
-        },
+    const result = await generateCard(
+      1,
+      makeDeps({
+        cardRepo: mockCardRepo({
+          updateStatus: (id, status, fields?) => {
+            statusUpdates.push({ status, fields });
+            return okAsync({ ...sampleCard, status, ...fields });
+          },
+        }),
       }),
-    }));
+    );
 
     result.match(
       () => {
@@ -581,23 +594,29 @@ describe("generateCard", () => {
   it("verifies prompt contains word and sentence from card", async () => {
     let capturedPrompt = "";
 
-    await generateCard(1, makeDeps({
-      llm: mockLlm({
-        generateStructured: (prompt, _schema) => {
-          capturedPrompt = prompt;
-          return okAsync(sampleLlmResponse);
-        },
+    await generateCard(
+      1,
+      makeDeps({
+        llm: mockLlm({
+          generateStructured: (prompt, _schema) => {
+            capturedPrompt = prompt;
+            return okAsync(sampleLlmResponse);
+          },
+        }),
       }),
-    }));
+    );
 
     assertEquals(capturedPrompt.includes("apple"), true);
     assertEquals(capturedPrompt.includes("I ate an apple"), true);
   });
 
   it("returns error when card not found", async () => {
-    const result = await generateCard(999, makeDeps({
-      cardRepo: mockCardRepo({ findById: () => okAsync(null) }),
-    }));
+    const result = await generateCard(
+      999,
+      makeDeps({
+        cardRepo: mockCardRepo({ findById: () => okAsync(null) }),
+      }),
+    );
 
     result.match(
       () => {
@@ -613,17 +632,20 @@ describe("generateCard", () => {
     const llmErr: LlmError = { kind: "llm", message: "API timeout" };
     let failedUpdate: { status: string; fields?: unknown } | undefined;
 
-    const result = await generateCard(1, makeDeps({
-      llm: mockLlm({ generateStructured: () => errAsync(llmErr) }),
-      cardRepo: mockCardRepo({
-        updateStatus: (_id, status, fields?) => {
-          if (status === "failed") {
-            failedUpdate = { status, fields };
-          }
-          return okAsync({ ...sampleCard, status, ...fields });
-        },
+    const result = await generateCard(
+      1,
+      makeDeps({
+        llm: mockLlm({ generateStructured: () => errAsync(llmErr) }),
+        cardRepo: mockCardRepo({
+          updateStatus: (_id, status, fields?) => {
+            if (status === "failed") {
+              failedUpdate = { status, fields };
+            }
+            return okAsync({ ...sampleCard, status, ...fields });
+          },
+        }),
       }),
-    }));
+    );
 
     // The service should still return ok (failure is recorded in DB)
     // OR return the error — depends on implementation.
@@ -643,15 +665,18 @@ describe("generateCard", () => {
   it("marks card as failed when submission not found", async () => {
     let markedFailed = false;
 
-    const result = await generateCard(1, makeDeps({
-      submissionRepo: mockSubmissionRepo({ findById: () => okAsync(null) }),
-      cardRepo: mockCardRepo({
-        updateStatus: (_id, status, _fields?) => {
-          if (status === "failed") markedFailed = true;
-          return okAsync({ ...sampleCard, status });
-        },
+    const result = await generateCard(
+      1,
+      makeDeps({
+        submissionRepo: mockSubmissionRepo({ findById: () => okAsync(null) }),
+        cardRepo: mockCardRepo({
+          updateStatus: (_id, status, _fields?) => {
+            if (status === "failed") markedFailed = true;
+            return okAsync({ ...sampleCard, status });
+          },
+        }),
       }),
-    }));
+    );
 
     result.match(
       () => assertEquals(markedFailed, true),
@@ -662,15 +687,18 @@ describe("generateCard", () => {
   it("marks card as failed when template not found", async () => {
     let markedFailed = false;
 
-    const result = await generateCard(1, makeDeps({
-      templateRepo: mockTemplateRepo({ findById: () => okAsync(null) }),
-      cardRepo: mockCardRepo({
-        updateStatus: (_id, status, _fields?) => {
-          if (status === "failed") markedFailed = true;
-          return okAsync({ ...sampleCard, status });
-        },
+    const result = await generateCard(
+      1,
+      makeDeps({
+        templateRepo: mockTemplateRepo({ findById: () => okAsync(null) }),
+        cardRepo: mockCardRepo({
+          updateStatus: (_id, status, _fields?) => {
+            if (status === "failed") markedFailed = true;
+            return okAsync({ ...sampleCard, status });
+          },
+        }),
       }),
-    }));
+    );
 
     result.match(
       () => assertEquals(markedFailed, true),
@@ -681,11 +709,14 @@ describe("generateCard", () => {
   it("propagates error when updateStatus to generating fails", async () => {
     const repoErr: RepositoryError = { kind: "repository", message: "DB locked" };
 
-    const result = await generateCard(1, makeDeps({
-      cardRepo: mockCardRepo({
-        updateStatus: () => errAsync(repoErr),
+    const result = await generateCard(
+      1,
+      makeDeps({
+        cardRepo: mockCardRepo({
+          updateStatus: () => errAsync(repoErr),
+        }),
       }),
-    }));
+    );
 
     result.match(
       () => {
@@ -702,7 +733,8 @@ describe("generateCard", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/processor/services/generate_card_test.ts`
+Run:
+`cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/processor/services/generate_card_test.ts`
 Expected: FAIL — module `./generate_card.ts` not found.
 
 - [ ] **Step 3: Implement generateCard service**
@@ -710,7 +742,7 @@ Expected: FAIL — module `./generate_card.ts` not found.
 Create `workers/processor/services/generate_card.ts`:
 
 ```typescript
-import { type ResultAsync, errAsync } from "neverthrow";
+import { errAsync, type ResultAsync } from "neverthrow";
 import type {
   CardRepositoryPort,
   LlmPort,
@@ -810,13 +842,13 @@ export function generateCard(
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/processor/services/generate_card_test.ts`
+Run:
+`cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/processor/services/generate_card_test.ts`
 Expected: PASS (all 7 tests).
 
 - [ ] **Step 5: Run full check**
 
-Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno task check`
-Expected: No errors.
+Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno task check` Expected: No errors.
 
 - [ ] **Step 6: Commit**
 
@@ -830,6 +862,7 @@ git commit -m "feat(processor): generateCard service with status transitions (#1
 ## Task 6: OpenAI LLM Adapter + Tests (#14)
 
 **Files:**
+
 - Create: `workers/processor/adapters/openai_llm.ts`
 - Create: `workers/processor/adapters/openai_llm_test.ts`
 
@@ -1029,7 +1062,8 @@ describe("OpenAI LLM adapter", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/processor/adapters/openai_llm_test.ts`
+Run:
+`cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/processor/adapters/openai_llm_test.ts`
 Expected: FAIL — module `./openai_llm.ts` not found.
 
 - [ ] **Step 3: Implement the OpenAI LLM adapter**
@@ -1037,7 +1071,7 @@ Expected: FAIL — module `./openai_llm.ts` not found.
 Create `workers/processor/adapters/openai_llm.ts`:
 
 ```typescript
-import { ResultAsync, errAsync } from "neverthrow";
+import { errAsync, ResultAsync } from "neverthrow";
 import type { LlmPort } from "../../shared/mod.ts";
 import type { LlmError } from "../../shared/domain/errors.ts";
 
@@ -1132,13 +1166,13 @@ export function createOpenAiLlm(config: OpenAiLlmConfig): LlmPort {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/processor/adapters/openai_llm_test.ts`
+Run:
+`cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/processor/adapters/openai_llm_test.ts`
 Expected: PASS (all 7 tests).
 
 - [ ] **Step 5: Run full check**
 
-Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno task check`
-Expected: No errors.
+Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno task check` Expected: No errors.
 
 - [ ] **Step 6: Commit**
 
@@ -1152,14 +1186,19 @@ git commit -m "feat(processor): OpenAI LLM adapter via AI Gateway (#14)"
 ## Task 7: Wire Processor Queue Consumer → generateCard (#15)
 
 **Files:**
+
 - Modify: `workers/processor/index.ts`
 - Modify: `workers/processor/index_test.ts`
 
 - [ ] **Step 1: Update the test to verify end-to-end wiring**
 
-Add to `workers/processor/index_test.ts` a new test that verifies the queue handler constructs deps and calls generateCard. Since the real wiring requires D1/fetch, we test at a higher level — verify that a `generate_card` message triggers status updates via the service.
+Add to `workers/processor/index_test.ts` a new test that verifies the queue handler constructs deps and calls
+generateCard. Since the real wiring requires D1/fetch, we test at a higher level — verify that a `generate_card` message
+triggers status updates via the service.
 
-The simplest approach: the existing skeleton tests already verify ack behavior. Add a test that verifies structured logging output. The full integration test would require mocking D1, which is complex. Instead, verify the wiring compiles and the handler doesn't throw.
+The simplest approach: the existing skeleton tests already verify ack behavior. Add a test that verifies structured
+logging output. The full integration test would require mocking D1, which is complex. Instead, verify the wiring
+compiles and the handler doesn't throw.
 
 Add this test:
 
@@ -1248,8 +1287,8 @@ export default {
 
 - [ ] **Step 3: Run tests to verify everything passes**
 
-Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/processor/`
-Expected: PASS (all processor tests).
+Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno test workers/processor/` Expected:
+PASS (all processor tests).
 
 - [ ] **Step 4: Run full check and all tests**
 
@@ -1269,19 +1308,19 @@ git commit -m "feat(processor): wire queue consumer to generateCard service (#15
 
 - [ ] **Step 1: Run the full test suite**
 
-Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno task test`
-Expected: All tests pass.
+Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno task test` Expected: All tests pass.
 
 - [ ] **Step 2: Run full quality check**
 
-Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno task check`
-Expected: No type errors, lint errors, or format issues.
+Run: `cd /Users/yuzuru/Source/anki-deck-agent/.claude/worktree/milestone-3 && deno task check` Expected: No type errors,
+lint errors, or format issues.
 
 - [ ] **Step 3: Review git log**
 
 Run: `git log --oneline -10`
 
 Expected commits (newest first):
+
 1. `feat(processor): wire queue consumer to generateCard service (#15)`
 2. `feat(processor): OpenAI LLM adapter via AI Gateway (#14)`
 3. `feat(processor): generateCard service with status transitions (#13)`
