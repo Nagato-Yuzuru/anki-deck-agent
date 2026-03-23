@@ -22,8 +22,8 @@ outcome.
 
 ### Notification Messages
 
-- Success: `✅ Card ready for **{word}**`
-- Failure: `❌ Failed to generate card for **{word}**`
+- Success: `✅ Card ready for <b>{word}</b>`
+- Failure: `❌ Failed to generate card for <b>{word}</b>`
 
 ## Architecture
 
@@ -55,8 +55,25 @@ type GenerateCardResult = {
 };
 ```
 
-On internal failure (card not found, submission not found, template not found), `generateCard` still returns an `Err`.
-The handler constructs a fallback notification where possible.
+**Ok/Err boundary:** `generateCard` returns `Ok(GenerateCardResult)` for all business outcomes — both successful
+generation (`succeeded: true`) and handled failures like LLM errors (`succeeded: false`, card already marked `FAILED` in
+D1). `Err` is reserved for unrecoverable infrastructure errors (e.g., D1 connection lost mid-operation).
+
+**Error paths where notification metadata is unavailable:**
+
+- **Card not found:** No submission to query → `Err`. Handler cannot notify (no chatId). Log and move on.
+- **Submission not found:** Card exists (`word` known) but no chatId/messageId → `Err`. Handler cannot notify. Log and
+  move on.
+- **Template not found:** Card and submission both fetched → `Ok({ succeeded: false, ... })` with chatId/messageId
+  available. Handler sends failure notification.
+- **LLM failure:** All metadata available → `Ok({ succeeded: false, ... })`. Handler sends failure notification.
+- **LLM success:** → `Ok({ succeeded: true, ... })`. Handler sends success notification.
+
+The handler sends notification only when it receives `Ok` (chatId/messageId guaranteed present). On `Err`, the handler
+logs the error and skips notification — these are rare infrastructure failures where we have no way to reach the user.
+
+**Notification port stays out of `GenerateCardDeps`.** The service must not know about notifications. The handler
+constructs and calls the notification adapter directly.
 
 ### Notification Adapter
 
@@ -64,10 +81,13 @@ The handler constructs a fallback notification where possible.
 
 ```typescript
 // POST https://api.telegram.org/bot<token>/editMessageText
-// Body: { chat_id, message_id, text, parse_mode: "Markdown" }
+// Body: { chat_id, message_id, text, parse_mode: "HTML" }
 ```
 
+- Uses `HTML` parse mode (not legacy `Markdown`) to avoid escaping issues with user-provided words containing `_`, `*`,
+  `[`, etc. Notification text uses `<b>word</b>` for bold.
 - Direct `fetch()` call to Telegram Bot API — no grammY dependency in processor.
+- `TELEGRAM_BOT_TOKEN` is already available on `ProcessorEnv` via `BaseEnv` — no wrangler config changes needed.
 - Injectable `fetchFn` for testability (same pattern as `openai_llm.ts`).
 - `sendFile` method implemented as a stub (`errAsync`) since M4 does not require file sending.
 
@@ -75,12 +95,21 @@ The handler constructs a fallback notification where possible.
 
 Notification is best-effort. It must not affect card generation status in D1.
 
-1. First attempt fails → retry once after no delay.
-2. Second attempt fails → log structured error, move on.
+1. First attempt fails (non-2xx HTTP response OR fetch exception) → retry once immediately.
+2. Second attempt fails → log structured error, return `Ok(void)` to handler (swallow the error).
 3. Card status in D1 is already committed before notification runs.
 
 Retry is implemented in the adapter, not in the handler. The handler calls `editMessage` once; the adapter internally
-retries.
+retries. Known benign failure: Telegram returns 400 when the original message was deleted by the user — this is logged
+and ignored like any other failure.
+
+### Structured Log Events
+
+| Event                 | Level   | When                           |
+| --------------------- | ------- | ------------------------------ |
+| `notification_sent`   | `log`   | Telegram API returned 2xx      |
+| `notification_retry`  | `warn`  | First attempt failed, retrying |
+| `notification_failed` | `error` | Both attempts failed           |
 
 ## File Changes
 
@@ -121,3 +150,4 @@ memory, avoiding a redundant D1 query in the handler.
 - `sendFile` implementation on `ChatNotificationPort` (stub only)
 - Submission status aggregation (deferred, single-card scope)
 - Rich notification formatting beyond success/failure
+- Idempotency guard for duplicate queue delivery (pre-existing concern, not introduced by M4)
