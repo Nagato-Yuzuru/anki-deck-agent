@@ -26,6 +26,7 @@ ALTER TABLE users ADD COLUMN active_template_id INTEGER REFERENCES card_template
 - Nullable. `NULL` means "use system default template".
 - Domain type `User` gains `activeTemplateId: number | null`.
 - `submit_word` replaces `DEFAULT_TEMPLATE_ID = 1` with: check `user.activeTemplateId`, fallback to `templateRepo.findDefault()`.
+- `activeTemplateId` is **not** part of `upsert`. A separate `UserRepositoryPort.updateActiveTemplate(telegramId: number, templateId: number | null)` method is added for future template switching. `upsert` continues to handle user creation with name and language code only.
 
 ### 1.2 `card_templates` — no structural changes
 
@@ -39,9 +40,9 @@ Column stays in schema to avoid migration churn. No code writes to it. Export lo
 
 ### 2.1 Seed script
 
-Create `workers/shared/db/seed.ts`, runnable via `deno run -A workers/shared/db/seed.ts`.
+Create `workers/shared/db/seed.ts`. Register as `deno task db:seed` in `deno.jsonc`.
 
-Performs `INSERT OR IGNORE` of one default template.
+The seed script connects to the local D1 database via wrangler's local persistence (same mechanism as `deno task dev:api`). Performs `INSERT OR IGNORE` of one default template.
 
 ### 2.2 Default template content
 
@@ -105,7 +106,7 @@ New methods:
 
 ### 3.1 `exportCards` pure function (Task 19)
 
-Location: `workers/api/services/export_cards.ts`
+Location: `workers/shared/services/export_cards.ts` (shared layer — pure function on domain types, reusable by both api and processor)
 
 ```typescript
 type ExportCardsInput = {
@@ -121,12 +122,15 @@ type ExportCardsResult = {
 function exportCards(input: ExportCardsInput): Result<ExportCardsResult, ExportError>
 ```
 
+`ExportError` is defined in `shared/domain/errors.ts`: `{ readonly kind: "export"; readonly message: string }`.
+
 Logic:
 1. Parse each card's `llmResponseJson`
 2. Map fields according to `template.ankiFieldsMapping`
-3. Generate TSV: no header row (Anki import doesn't need headers; field order defined by mapping)
-4. Return TSV string + exported cardIds
-5. Cards with unparseable JSON are skipped, noted in errors
+3. Sanitize field values: replace `\t` with spaces, `\n`/`\r` with spaces (LLM output may contain these)
+4. Generate TSV: no header row (Anki import doesn't need headers; field order defined by mapping)
+5. Return TSV string + exported cardIds
+6. Cards with unparseable JSON are skipped, noted in errors
 
 Pure function, no I/O.
 
@@ -136,34 +140,27 @@ Location: `workers/api/handlers/export_command.ts`
 
 Handler orchestration:
 ```
-1. cardRepo.findReadyByUserId(userId)
+1. cardRepo.findReadyByUserId(userId) → returns cards with templateId (joined through submissions)
 2. No ready cards → reply "No cards ready for export."
-3. templateRepo.findById(cards[0].submission.templateId)
-4. exportCards(cards, template) → TSV string
-5. fileSender.sendFile(chatId, tsv, "anki_export.txt")
+3. Group cards by templateId (future-proof; currently all cards share the same template)
+4. For each group: templateRepo.findById(templateId) → exportCards(cards, template) → TSV
+5. chatNotification.sendFile(chatId, tsv, "anki_export.txt")
 6. cardRepo.markExported(cardIds)
 ```
 
-**Key decision:** Send first, mark after. If send fails, cards stay `ready` and user can retry.
+**Key decisions:**
+- **Send first, mark after.** If send fails, cards stay `ready` and user can retry.
+- **`markExported` only updates cards with status `ready`** (WHERE clause guard), preventing race conditions.
 
 ### 3.3 CardRepositoryPort extensions (Task 21)
 
 New methods:
-- `findReadyByUserId(userId: number): ResultAsync<readonly Card[], RepositoryError>`
-- `markExported(ids: readonly number[]): ResultAsync<void, RepositoryError>` — batch update status to `exported`
+- `findReadyByUserId(userId: number): ResultAsync<readonly ReadyCard[], RepositoryError>` — joins `cards` with `submissions` to filter by userId and include `templateId`. Returns `ReadyCard = Card & { templateId: number }`.
+- `markExported(ids: readonly number[]): ResultAsync<void, RepositoryError>` — batch update status to `exported`, with `WHERE status = 'ready'` guard.
 
-### 3.4 FileSenderPort
+### 3.4 Reuse `ChatNotificationPort` for file sending
 
-New narrow port for api worker (doesn't need `editMessage`):
-
-```typescript
-// shared/ports/file_sender.ts
-interface FileSenderPort {
-  sendFile(chatId: string, content: Uint8Array, filename: string, caption?: string): ResultAsync<void, NotificationError>;
-}
-```
-
-Api-side Telegram adapter implements this interface.
+The existing `ChatNotificationPort` already declares `sendFile(chatId, file, filename, caption?)`. Rather than creating a separate `FileSenderPort`, the `/export` handler depends on `Pick<ChatNotificationPort, "sendFile">`. The api worker creates its own Telegram adapter implementing `ChatNotificationPort` (the processor already has one). The existing stub `sendFile` implementation is completed.
 
 ## §4: Error Handling & Retry (Task 23)
 
@@ -175,9 +172,12 @@ type ErrorClassification = "transient" | "permanent";
 function classifyError(error: { kind: string; message: string }): ErrorClassification
 ```
 
-Classification rules:
-- **Transient (retry):** Network timeouts, rate limits (429), AI Gateway 5xx, D1 temporary unavailability
-- **Permanent (ack):** JSON schema validation failure, template not found, submission not found, unparseable LLM response
+Classification rules by error kind:
+- **`llm`**: transient by default (network/rate-limit/5xx); permanent if message contains "schema" or "parse" (invalid LLM output)
+- **`repository`**: transient by default (D1 temporary unavailability); permanent if "not found" (missing data)
+- **`tts`**: N/A (TTS moved to client)
+- **`notification`**: transient (Telegram API errors are retryable)
+- **`queue`**: transient (queue delivery issues)
 
 ### 4.2 Queue handler behavior
 
@@ -250,18 +250,18 @@ Requires local `.dev.vars` with real Telegram bot token:
 
 ### New files
 - `workers/shared/db/seed.ts` — seed default template
-- `workers/shared/ports/file_sender.ts` — FileSenderPort interface
-- `workers/api/services/export_cards.ts` — pure TSV generation function
-- `workers/api/services/export_cards_test.ts` — tests
+- `workers/shared/services/export_cards.ts` — pure TSV generation function
+- `workers/shared/services/export_cards_test.ts` — tests
 - `workers/api/handlers/export_command.ts` — /export handler
 - `workers/api/handlers/export_command_test.ts` — tests
-- `workers/api/adapters/telegram_file_sender.ts` — FileSenderPort impl
+- `workers/api/adapters/telegram_notification.ts` — ChatNotificationPort impl for api worker
 
 ### Modified files
 - `workers/shared/db/schema.ts` — users.active_template_id column
 - `workers/shared/domain/user.ts` — activeTemplateId field
-- `workers/shared/domain/errors.ts` — ErrorClassification, classifyError
+- `workers/shared/domain/errors.ts` — ExportError, ErrorClassification, classifyError
 - `workers/shared/ports/card_repository.ts` — findReadyByUserId, markExported
+- `workers/shared/ports/user_repository.ts` — updateActiveTemplate
 - `workers/shared/ports/template_repository.ts` — create, findDefault
 - `workers/shared/adapters/d1_card_repository.ts` — implement new methods
 - `workers/shared/adapters/d1_template_repository.ts` — implement new methods
@@ -269,4 +269,6 @@ Requires local `.dev.vars` with real Telegram bot token:
 - `workers/api/adapters/telegram_webhook.ts` — register /export, plain text handler, replace DEFAULT_TEMPLATE_ID
 - `workers/api/services/submit_word.ts` — use user.activeTemplateId with fallback
 - `workers/processor/index.ts` — error classification, retry/ack logic, idempotency guard
+- `workers/processor/adapters/telegram_notification.ts` — implement sendFile (replace stub)
+- `deno.jsonc` — add `db:seed` task
 - DB migration (auto-generated via `deno task db:generate`)
