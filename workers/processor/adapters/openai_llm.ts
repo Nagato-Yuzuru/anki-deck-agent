@@ -20,15 +20,18 @@ export function createOpenAiLlm(config: OpenAiLlmConfig): LlmPort {
       let parsedSchema: unknown;
       try {
         parsedSchema = JSON.parse(jsonSchema);
-      } catch {
+      } catch (e) {
+        const parseError = e instanceof Error ? e.message : String(e);
         return errAsync({
           kind: "llm" as const,
-          message: `Invalid JSON schema: ${jsonSchema}`,
+          message: `Invalid JSON schema: ${parseError} (input: ${jsonSchema.slice(0, 200)})`,
         });
       }
 
+      const baseUrl = config.gatewayUrl.replace(/\/+$/, "");
+
       return ResultAsync.fromPromise(
-        fetchFn(`${config.gatewayUrl}/chat/completions`, {
+        fetchFn(`${baseUrl}/chat/completions`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${config.apiKey}`,

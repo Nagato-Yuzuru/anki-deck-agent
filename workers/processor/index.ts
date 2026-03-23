@@ -25,40 +25,48 @@ export default {
 
     // Sequential processing is intentional — avoid overwhelming D1/LLM with concurrent requests.
     for (const msg of batch.messages) {
-      switch (msg.body.type) {
-        case "generate_card": {
-          const startTime = Date.now();
-          console.log({
-            event: "queue_message_received",
-            type: msg.body.type,
-            cardId: msg.body.cardId,
-          });
+      try {
+        switch (msg.body.type) {
+          case "generate_card": {
+            const startTime = Date.now();
+            console.log({
+              event: "queue_message_received",
+              type: msg.body.type,
+              cardId: msg.body.cardId,
+            });
 
-          // deno-lint-ignore no-await-in-loop
-          const result = await generateCard(msg.body.cardId, deps);
-          result.match(
-            () => {
-              console.log({
-                event: "card_generated",
-                cardId: msg.body.cardId,
-                durationMs: Date.now() - startTime,
-              });
-            },
-            (err) => {
-              console.error({
-                event: "card_generation_failed",
-                cardId: msg.body.cardId,
-                error: err.message,
-                durationMs: Date.now() - startTime,
-              });
-            },
-          );
-          break;
+            // deno-lint-ignore no-await-in-loop
+            const result = await generateCard(msg.body.cardId, deps);
+            result.match(
+              () => {
+                console.log({
+                  event: "card_generated",
+                  cardId: msg.body.cardId,
+                  durationMs: Date.now() - startTime,
+                });
+              },
+              (err) => {
+                console.error({
+                  event: "card_generation_failed",
+                  cardId: msg.body.cardId,
+                  error: err.message,
+                  durationMs: Date.now() - startTime,
+                });
+              },
+            );
+            break;
+          }
+          default:
+            console.error({ event: "unknown_message_type", body: msg.body });
         }
-        default:
-          console.error({ event: "unknown_message_type", body: msg.body });
+      } catch (err) {
+        console.error({
+          event: "queue_message_processing_error",
+          error: err instanceof Error ? err.message : String(err),
+        });
+      } finally {
+        msg.ack();
       }
-      msg.ack();
     }
   },
 };
