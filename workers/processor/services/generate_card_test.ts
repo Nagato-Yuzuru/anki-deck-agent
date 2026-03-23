@@ -113,7 +113,11 @@ describe("generateCard", () => {
     );
 
     result.match(
-      () => {
+      (res) => {
+        assertEquals(res.word, "apple");
+        assertEquals(res.chatId, "12345");
+        assertEquals(res.messageId, "1");
+        assertEquals(res.succeeded, true);
         assertEquals(statusUpdates.length, 2);
         assertEquals(statusUpdates[0]!.status, "generating");
         assertEquals(statusUpdates[1]!.status, "ready");
@@ -161,7 +165,7 @@ describe("generateCard", () => {
     );
   });
 
-  it("marks card as failed when LLM call fails", async () => {
+  it("returns Ok with succeeded false when LLM call fails", async () => {
     const llmErr: LlmError = { kind: "llm", message: "API timeout" };
     let failedUpdate: { status: string; fields?: unknown } | undefined;
 
@@ -181,12 +185,15 @@ describe("generateCard", () => {
     );
 
     result.match(
-      () => {
+      (res) => {
+        assertEquals(res.succeeded, false);
+        assertEquals(res.word, "apple");
+        assertEquals(res.chatId, "12345");
+        assertEquals(res.messageId, "1");
         assertEquals(failedUpdate?.status, "failed");
       },
       (err) => {
-        assertEquals(err.kind, "llm");
-        assertEquals(failedUpdate?.status, "failed");
+        throw new Error(`Expected Ok with succeeded: false, got Err: ${err.message}`);
       },
     );
   });
@@ -213,7 +220,7 @@ describe("generateCard", () => {
     );
   });
 
-  it("marks card as failed when template not found", async () => {
+  it("returns Ok with succeeded false when template not found", async () => {
     let markedFailed = false;
 
     const result = await generateCard(
@@ -230,8 +237,15 @@ describe("generateCard", () => {
     );
 
     result.match(
-      () => assertEquals(markedFailed, true),
-      (err) => assertEquals(err.kind, "repository"),
+      (res) => {
+        assertEquals(res.succeeded, false);
+        assertEquals(res.word, "apple");
+        assertEquals(res.chatId, "12345");
+        assertEquals(markedFailed, true);
+      },
+      (err) => {
+        throw new Error(`Expected Ok with succeeded: false, got Err: ${err.message}`);
+      },
     );
   });
 

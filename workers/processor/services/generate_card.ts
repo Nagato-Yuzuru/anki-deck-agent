@@ -5,8 +5,15 @@ import type {
   SubmissionRepositoryPort,
   TemplateRepositoryPort,
 } from "../../shared/mod.ts";
-import type { LlmError, RepositoryError } from "../../shared/domain/errors.ts";
+import type { RepositoryError } from "../../shared/domain/errors.ts";
 import { CARD_STATUS } from "../../shared/mod.ts";
+
+export type GenerateCardResult = {
+  readonly word: string;
+  readonly chatId: string;
+  readonly messageId: string;
+  readonly succeeded: boolean;
+};
 
 export type GenerateCardDeps = {
   readonly cardRepo: CardRepositoryPort;
@@ -18,7 +25,7 @@ export type GenerateCardDeps = {
 export function generateCard(
   cardId: number,
   deps: GenerateCardDeps,
-): ResultAsync<void, RepositoryError | LlmError> {
+): ResultAsync<GenerateCardResult, RepositoryError> {
   return deps.cardRepo
     .findById(cardId)
     .andThen((card) => {
@@ -53,12 +60,12 @@ export function generateCard(
                   .updateStatus(card.id, CARD_STATUS.FAILED, {
                     errorMessage: `Template not found: ${submission.templateId}`,
                   })
-                  .andThen(() =>
-                    errAsync<never, RepositoryError>({
-                      kind: "repository",
-                      message: `Template not found: ${submission.templateId}`,
-                    })
-                  );
+                  .map((): GenerateCardResult => ({
+                    word: card.word,
+                    chatId: submission.chatId,
+                    messageId: submission.messageId,
+                    succeeded: false,
+                  }));
               }
 
               const prompt = template.promptTemplate
@@ -71,7 +78,12 @@ export function generateCard(
                 .andThen((llmResponseJson) =>
                   deps.cardRepo
                     .updateStatus(card.id, CARD_STATUS.READY, { llmResponseJson })
-                    .map(() => undefined)
+                    .map((): GenerateCardResult => ({
+                      word: card.word,
+                      chatId: submission.chatId,
+                      messageId: submission.messageId,
+                      succeeded: true,
+                    }))
                 )
                 .orElse((llmErr) =>
                   deps.cardRepo
@@ -87,7 +99,12 @@ export function generateCard(
                       });
                       return repoErr;
                     })
-                    .andThen(() => errAsync(llmErr))
+                    .map((): GenerateCardResult => ({
+                      word: card.word,
+                      chatId: submission.chatId,
+                      messageId: submission.messageId,
+                      succeeded: false,
+                    }))
                 );
             },
           );
