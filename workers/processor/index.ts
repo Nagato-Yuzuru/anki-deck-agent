@@ -62,6 +62,8 @@ export default {
       } catch (err) {
         console.error({
           event: "queue_message_processing_error",
+          type: msg.body.type,
+          body: msg.body,
           error: err instanceof Error ? err.message : String(err),
         });
       } finally {

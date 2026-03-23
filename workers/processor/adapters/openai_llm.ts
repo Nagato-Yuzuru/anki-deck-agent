@@ -55,12 +55,13 @@ export function createOpenAiLlm(config: OpenAiLlmConfig): LlmPort {
           return ResultAsync.fromPromise(
             response.text(),
             (): LlmError => ({ kind: "llm", message: `HTTP ${response.status}` }),
-          ).andThen((body) =>
-            errAsync<never, LlmError>({
+          ).andThen((body) => {
+            console.error({ event: "llm_http_error", status: response.status, body });
+            return errAsync<never, LlmError>({
               kind: "llm",
-              message: `HTTP ${response.status}: ${body}`,
-            })
-          );
+              message: `HTTP ${response.status}: ${body.slice(0, 200)}`,
+            });
+          });
         }
 
         return ResultAsync.fromPromise(
@@ -82,10 +83,13 @@ export function createOpenAiLlm(config: OpenAiLlmConfig): LlmPort {
 
           return ResultAsync.fromPromise(
             Promise.resolve().then(() => JSON.parse(content) as unknown),
-            (): LlmError => ({
-              kind: "llm",
-              message: `LLM response is not valid JSON: ${content.slice(0, 200)}`,
-            }),
+            (): LlmError => {
+              console.error({ event: "llm_invalid_json", content: content.slice(0, 500) });
+              return {
+                kind: "llm",
+                message: "LLM response is not valid JSON",
+              };
+            },
           );
         });
       });
