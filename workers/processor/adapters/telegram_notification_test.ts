@@ -45,7 +45,7 @@ describe("TelegramNotificationAdapter", () => {
         },
       });
 
-      let errorMessages: string[] = [];
+      const errorMessages: string[] = [];
       const result = await adapter.editMessage("chat-1", "msg-1", "Hello");
 
       // Capture error messages from the retry chain
