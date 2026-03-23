@@ -13,6 +13,7 @@ export type GenerateCardResult = {
   readonly chatId: string;
   readonly messageId: string;
   readonly succeeded: boolean;
+  readonly errorMessage?: string;
 };
 
 export type GenerateCardDeps = {
@@ -56,15 +57,17 @@ export function generateCard(
           return deps.templateRepo.findById(submission.templateId).andThen(
             (template) => {
               if (!template) {
+                const errorMessage = `Template not found: ${submission.templateId}`;
                 return deps.cardRepo
                   .updateStatus(card.id, CARD_STATUS.FAILED, {
-                    errorMessage: `Template not found: ${submission.templateId}`,
+                    errorMessage,
                   })
                   .map((): GenerateCardResult => ({
                     word: card.word,
                     chatId: submission.chatId,
                     messageId: submission.messageId,
                     succeeded: false,
+                    errorMessage,
                   }));
               }
 
@@ -104,6 +107,7 @@ export function generateCard(
                       chatId: submission.chatId,
                       messageId: submission.messageId,
                       succeeded: false,
+                      errorMessage: llmErr.message,
                     }))
                 );
             },

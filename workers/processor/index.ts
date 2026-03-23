@@ -15,7 +15,7 @@ export default {
   async queue(
     batch: MessageBatch<QueueMessage>,
     env: ProcessorEnv,
-    _ctx: ExecutionContext,
+    ctx: ExecutionContext,
   ): Promise<void> {
     const deps = {
       cardRepo: new D1CardRepository(env.DB),
@@ -50,20 +50,25 @@ export default {
 
             if (result.isOk()) {
               const res = result.value;
-              console.log({
+              const logEntry: Record<string, unknown> = {
                 event: res.succeeded ? "card_generated" : "card_generation_failed",
                 cardId: msg.body.cardId,
                 word: res.word,
                 succeeded: res.succeeded,
                 durationMs,
-              });
+              };
+
+              if (!res.succeeded && res.errorMessage) {
+                logEntry.errorMessage = res.errorMessage;
+              }
+
+              console.log(logEntry);
 
               const text = res.succeeded
                 ? `✅ Card ready for <b>${escapeHtml(res.word)}</b>`
                 : `❌ Failed to generate card for <b>${escapeHtml(res.word)}</b>`;
 
-              // deno-lint-ignore no-await-in-loop
-              await notification.editMessage(res.chatId, res.messageId, text);
+              ctx.waitUntil(notification.editMessage(res.chatId, res.messageId, text));
             } else {
               console.error({
                 event: "card_generation_failed",
