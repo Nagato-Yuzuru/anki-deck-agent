@@ -190,6 +190,7 @@ describe("generateCard", () => {
         assertEquals(res.word, "apple");
         assertEquals(res.chatId, "12345");
         assertEquals(res.messageId, "1");
+        assertEquals(res.errorMessage, "API timeout");
         assertEquals(failedUpdate?.status, "failed");
       },
       (err) => {
@@ -241,6 +242,7 @@ describe("generateCard", () => {
         assertEquals(res.succeeded, false);
         assertEquals(res.word, "apple");
         assertEquals(res.chatId, "12345");
+        assertEquals(res.errorMessage, "Template not found: 5");
         assertEquals(markedFailed, true);
       },
       (err) => {
