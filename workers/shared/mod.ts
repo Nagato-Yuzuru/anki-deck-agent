@@ -42,5 +42,9 @@ export type { SubmissionRepositoryPort } from "./ports/submission_repository.ts"
 export type { UserRepositoryPort } from "./ports/user_repository.ts";
 export type { TemplateRepositoryPort } from "./ports/template_repository.ts";
 
+// Adapters
+export { createTelegramNotification } from "./adapters/telegram_notification.ts";
+export type { TelegramNotificationConfig } from "./adapters/telegram_notification.ts";
+
 // Env bindings
 export type { ApiEnv, BaseEnv, ProcessorEnv } from "./env.ts";
