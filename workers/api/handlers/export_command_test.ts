@@ -57,7 +57,6 @@ describe("handleExportCommand", () => {
     const input: ExportCommandInput = {
       userId: 123,
       chatId: "456",
-      messageId: "789",
     };
 
     const cards = [
@@ -126,7 +125,6 @@ describe("handleExportCommand", () => {
     const input: ExportCommandInput = {
       userId: 123,
       chatId: "456",
-      messageId: "789",
     };
 
     const cards = [
@@ -190,14 +188,11 @@ describe("handleExportCommand", () => {
     );
   });
 
-  it("should send 'No cards ready for export' message when no cards are ready", async () => {
+  it("should return export error when no cards are ready", async () => {
     const input: ExportCommandInput = {
       userId: 123,
       chatId: "456",
-      messageId: "789",
     };
-
-    let editedMessage: string | null = null;
 
     const mockCardRepo: CardRepositoryPort = {
       findReadyByUserId: () => okAsync([]),
@@ -222,9 +217,8 @@ describe("handleExportCommand", () => {
     };
 
     const mockNotification: ChatNotificationPort = {
-      editMessage: (_chatId, _messageId, text) => {
-        editedMessage = text;
-        return okAsync(undefined);
+      editMessage: () => {
+        throw new Error("should not be called");
       },
       sendFile: () => {
         throw new Error("should not be called");
@@ -239,10 +233,11 @@ describe("handleExportCommand", () => {
 
     result.match(
       () => {
-        assertEquals(editedMessage, "No cards ready for export.");
+        throw new Error("Expected error");
       },
       (err) => {
-        throw new Error(`Expected ok, got error: ${err.kind} - ${err.message}`);
+        assertEquals(err.kind, "export");
+        assertEquals(err.message, "No cards ready for export");
       },
     );
   });
@@ -251,7 +246,6 @@ describe("handleExportCommand", () => {
     const input: ExportCommandInput = {
       userId: 123,
       chatId: "456",
-      messageId: "789",
     };
 
     const mockCardRepo: CardRepositoryPort = {
@@ -302,7 +296,6 @@ describe("handleExportCommand", () => {
     const input: ExportCommandInput = {
       userId: 123,
       chatId: "456",
-      messageId: "789",
     };
 
     const cards = [
@@ -361,7 +354,6 @@ describe("handleExportCommand", () => {
     const input: ExportCommandInput = {
       userId: 123,
       chatId: "456",
-      messageId: "789",
     };
 
     const cards = [
@@ -419,7 +411,6 @@ describe("handleExportCommand", () => {
     const input: ExportCommandInput = {
       userId: 123,
       chatId: "456",
-      messageId: "789",
     };
 
     const cards = [
@@ -482,7 +473,6 @@ describe("handleExportCommand", () => {
     const input: ExportCommandInput = {
       userId: 123,
       chatId: "456",
-      messageId: "789",
     };
 
     const cards = [
@@ -544,7 +534,6 @@ describe("handleExportCommand", () => {
     const input: ExportCommandInput = {
       userId: 123,
       chatId: "456",
-      messageId: "789",
     };
 
     const cards = [

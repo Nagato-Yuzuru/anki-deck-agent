@@ -68,7 +68,7 @@ export function createTelegramNotification(config: TelegramNotificationConfig): 
     ): ResultAsync<void, NotificationError> {
       const formData = new FormData();
       formData.append("chat_id", chatId);
-      formData.append("document", new Blob([file.buffer as ArrayBuffer]), filename);
+      formData.append("document", new Blob([file.slice().buffer as ArrayBuffer]), filename);
       if (caption) {
         formData.append("caption", caption);
       }

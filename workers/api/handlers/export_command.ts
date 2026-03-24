@@ -9,7 +9,6 @@ import type { ReadyCard } from "../../shared/domain/mod.ts";
 export type ExportCommandInput = {
   readonly userId: number;
   readonly chatId: string;
-  readonly messageId: string;
 };
 
 export type ExportCommandDeps = {
@@ -71,9 +70,10 @@ export function handleExportCommand(
     .mapErr((e): ExportCommandError => e)
     .andThen((readyCards) => {
       if (readyCards.length === 0) {
-        return deps.chatNotification
-          .editMessage(input.chatId, input.messageId, "No cards ready for export.")
-          .mapErr((e): ExportCommandError => e);
+        return errAsync<void, ExportCommandError>({
+          kind: "export",
+          message: "No cards ready for export",
+        });
       }
 
       // Group cards by templateId

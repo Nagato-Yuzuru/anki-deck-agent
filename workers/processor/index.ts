@@ -5,7 +5,7 @@ import { D1SubmissionRepository } from "../shared/adapters/d1_submission_reposit
 import { D1TemplateRepository } from "../shared/adapters/d1_template_repository.ts";
 import { classifyError } from "../shared/domain/errors.ts";
 import { createOpenAiLlm } from "./adapters/openai_llm.ts";
-import { createTelegramNotification } from "./adapters/telegram_notification.ts";
+import { createTelegramNotification } from "../shared/adapters/telegram_notification.ts";
 import { generateCard } from "./services/generate_card.ts";
 
 function escapeHtml(text: string): string {

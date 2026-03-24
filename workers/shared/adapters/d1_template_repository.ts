@@ -31,6 +31,7 @@ export class D1TemplateRepository implements TemplateRepositoryPort {
         .select()
         .from(cardTemplates)
         .where(eq(cardTemplates.isActive, 1))
+        .orderBy(cardTemplates.id)
         .limit(1)
         .then((rows) => (rows[0] ? D1TemplateRepository.toDomain(rows[0]) : null)),
       (err): RepositoryError => ({ kind: "repository", message: String(err) }),

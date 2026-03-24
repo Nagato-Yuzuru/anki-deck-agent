@@ -58,6 +58,6 @@ CREATE TABLE `__new_users` (
 	FOREIGN KEY (`active_template_id`) REFERENCES `card_templates`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-INSERT INTO `__new_users`("telegram_id", "first_name", "language_code", "active_template_id", "created_at") SELECT "telegram_id", "first_name", "language_code", "active_template_id", "created_at" FROM `users`;--> statement-breakpoint
+INSERT INTO `__new_users`("telegram_id", "first_name", "language_code", "active_template_id", "created_at") SELECT "telegram_id", "first_name", "language_code", NULL AS "active_template_id", "created_at" FROM `users`;--> statement-breakpoint
 DROP TABLE `users`;--> statement-breakpoint
 ALTER TABLE `__new_users` RENAME TO `users`;

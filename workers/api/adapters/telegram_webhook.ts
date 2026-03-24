@@ -82,6 +82,8 @@ function registerAddCommand(bot: Bot, deps: SubmitWordDeps): void {
       return;
     }
 
+    const sentMsg = await ctx.reply(`⏳ Generating card for "${parsed.word}"...`);
+
     const result = await submitWord(
       {
         userId: from.id,
@@ -90,7 +92,7 @@ function registerAddCommand(bot: Bot, deps: SubmitWordDeps): void {
         word: parsed.word,
         sentence: parsed.sentence,
         chatId: String(ctx.chat.id),
-        messageId: String(ctx.msg.message_id),
+        messageId: String(sentMsg.message_id),
         templateId: DEFAULT_TEMPLATE_ID,
       },
       deps,
@@ -98,15 +100,21 @@ function registerAddCommand(bot: Bot, deps: SubmitWordDeps): void {
 
     await result.match(
       async (val) => {
-        if (val.isNew) {
-          await ctx.reply(`⏳ Generating card for "${parsed.word}"...`);
-        } else {
-          await ctx.reply(`Card for "${parsed.word}" already exists (status: ${val.existingStatus}).`);
+        if (!val.isNew) {
+          await ctx.api.editMessageText(
+            ctx.chat.id,
+            sentMsg.message_id,
+            `Card for "${parsed.word}" already exists (status: ${val.existingStatus}).`,
+          );
         }
       },
       async (err) => {
         console.error({ event: "submit_word_failed", error: err.message, userId: from.id });
-        await ctx.reply("Something went wrong. Please try again later.");
+        await ctx.api.editMessageText(
+          ctx.chat.id,
+          sentMsg.message_id,
+          "Something went wrong. Please try again later.",
+        );
       },
     );
   });
@@ -125,6 +133,9 @@ function registerAddCommand(bot: Bot, deps: SubmitWordDeps): void {
       await ctx.reply("Could not identify user.");
       return;
     }
+
+    const sentMsg = await ctx.reply(`⏳ Generating card for "${parsed.word}"...`);
+
     const result = await submitWord(
       {
         userId: from.id,
@@ -133,22 +144,28 @@ function registerAddCommand(bot: Bot, deps: SubmitWordDeps): void {
         word: parsed.word,
         sentence: parsed.sentence,
         chatId: String(ctx.chat.id),
-        messageId: String(ctx.msg.message_id),
+        messageId: String(sentMsg.message_id),
         templateId: DEFAULT_TEMPLATE_ID,
       },
       deps,
     );
     await result.match(
       async (val) => {
-        if (val.isNew) {
-          await ctx.reply(`⏳ Generating card for "${parsed.word}"...`);
-        } else {
-          await ctx.reply(`Card for "${parsed.word}" already exists (status: ${val.existingStatus}).`);
+        if (!val.isNew) {
+          await ctx.api.editMessageText(
+            ctx.chat.id,
+            sentMsg.message_id,
+            `Card for "${parsed.word}" already exists (status: ${val.existingStatus}).`,
+          );
         }
       },
       async (err) => {
         console.error({ event: "submit_word_failed", error: err.message, userId: from.id });
-        await ctx.reply("Something went wrong. Please try again later.");
+        await ctx.api.editMessageText(
+          ctx.chat.id,
+          sentMsg.message_id,
+          "Something went wrong. Please try again later.",
+        );
       },
     );
   });
@@ -166,15 +183,18 @@ function registerExportCommand(bot: Bot, env: ApiEnv, options?: WebhookOptions):
       {
         userId: from.id,
         chatId: String(ctx.chat.id),
-        messageId: String(ctx.msg.message_id),
       },
       exportDeps,
     );
     await result.match(
       async () => {/* success handled inside handler via notification */},
       async (err) => {
-        console.error({ event: "export_failed", error: err.message, userId: from.id });
-        await ctx.reply("Export failed. Please try again later.");
+        if (err.kind === "export") {
+          await ctx.reply(err.message);
+        } else {
+          console.error({ event: "export_failed", error: err.message, userId: from.id });
+          await ctx.reply("Export failed. Please try again later.");
+        }
       },
     );
   });

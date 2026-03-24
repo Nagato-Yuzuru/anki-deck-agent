@@ -32,7 +32,7 @@ describe("createTelegramNotification", () => {
       assertEquals(body.parse_mode, "HTML");
     });
 
-    it("returns error on fetch failure", async () => {
+    it("swallows fetch failure after retry exhaustion", async () => {
       const mockFetch = (): Promise<Response> => {
         return Promise.reject(new Error("Network error"));
       };
@@ -47,7 +47,7 @@ describe("createTelegramNotification", () => {
       assertEquals(result.isOk(), true); // orElse converts to ok after retry
     });
 
-    it("returns error on non-2xx status", async () => {
+    it("swallows non-2xx error after retry exhaustion", async () => {
       const mockFetch = (): Promise<Response> => {
         return Promise.resolve(
           new Response(JSON.stringify({ ok: false, description: "Message not found" }), {
@@ -82,6 +82,50 @@ describe("createTelegramNotification", () => {
 
       // The error is logged and converted to ok by orElse with retry logic
       assertEquals(result.isOk(), true);
+    });
+
+    it("retries once on non-2xx then succeeds", async () => {
+      let attempts = 0;
+
+      const mockFetch = (): Promise<Response> => {
+        attempts++;
+        if (attempts === 1) {
+          return Promise.resolve(new Response("Server Error", { status: 500 }));
+        }
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      };
+
+      const notification = createTelegramNotification({
+        botToken: "test-token",
+        fetchFn: mockFetch as typeof fetch,
+      });
+
+      const result = await notification.editMessage("123456", "789", "Updated text");
+
+      assertEquals(result.isOk(), true);
+      assertEquals(attempts, 2);
+    });
+
+    it("retries once on fetch exception then succeeds", async () => {
+      let attempts = 0;
+
+      const mockFetch = (): Promise<Response> => {
+        attempts++;
+        if (attempts === 1) {
+          return Promise.reject(new Error("Network error"));
+        }
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      };
+
+      const notification = createTelegramNotification({
+        botToken: "test-token",
+        fetchFn: mockFetch as typeof fetch,
+      });
+
+      const result = await notification.editMessage("123456", "789", "Updated text");
+
+      assertEquals(result.isOk(), true);
+      assertEquals(attempts, 2);
     });
   });
 

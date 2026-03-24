@@ -51,7 +51,12 @@ export class D1UserRepository implements UserRepositoryPort {
         .set({ activeTemplateId: templateId })
         .where(eq(users.telegramId, telegramId))
         .returning()
-        .then((rows) => this.toDomain(rows[0]!)),
+        .then((rows) => {
+          if (!rows[0]) {
+            throw new Error(`User with telegramId ${telegramId} not found when updating active template`);
+          }
+          return this.toDomain(rows[0]);
+        }),
       (err): RepositoryError => ({ kind: "repository", message: String(err) }),
     );
   }
