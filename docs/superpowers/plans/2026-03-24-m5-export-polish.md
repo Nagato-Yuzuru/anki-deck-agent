@@ -1,10 +1,14 @@
 # M5: Export & Polish — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or
+> superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Deliver the Anki export pipeline (/export → TSV) and polish the system with error handling, plain text support, and seed data.
+**Goal:** Deliver the Anki export pipeline (/export → TSV) and polish the system with error handling, plain text
+support, and seed data.
 
-**Architecture:** Extends the existing hexagonal architecture. New pure function `exportCards` in shared layer generates TSV from domain types. Export handler orchestrates repository queries → TSV generation → Telegram file send → status update. Error classification in processor enables smart retry/ack decisions.
+**Architecture:** Extends the existing hexagonal architecture. New pure function `exportCards` in shared layer generates
+TSV from domain types. Export handler orchestrates repository queries → TSV generation → Telegram file send → status
+update. Error classification in processor enables smart retry/ack decisions.
 
 **Tech Stack:** Deno, Hono, grammY, Drizzle ORM (D1), neverthrow, Cloudflare Workers/Queues
 
@@ -15,45 +19,48 @@
 ## File Structure
 
 ### New files
-| File | Responsibility |
-|------|---------------|
-| `workers/shared/domain/ready_card.ts` | `ReadyCard` type (Card + templateId) |
-| `workers/shared/services/export_cards.ts` | Pure function: cards + template → TSV |
-| `workers/shared/services/export_cards_test.ts` | Tests for TSV generation |
-| `workers/shared/db/seed.sql` | SQL seed for default CardTemplate (wrangler d1 execute) |
-| `workers/shared/db/seed.ts` | Default template constant for programmatic use |
-| `workers/api/handlers/export_command.ts` | /export handler orchestration |
-| `workers/api/handlers/export_command_test.ts` | Tests for export handler |
-| `workers/api/adapters/telegram_notification.ts` | ChatNotificationPort impl for api worker |
+
+| File                                            | Responsibility                                          |
+| ----------------------------------------------- | ------------------------------------------------------- |
+| `workers/shared/domain/ready_card.ts`           | `ReadyCard` type (Card + templateId)                    |
+| `workers/shared/services/export_cards.ts`       | Pure function: cards + template → TSV                   |
+| `workers/shared/services/export_cards_test.ts`  | Tests for TSV generation                                |
+| `workers/shared/db/seed.sql`                    | SQL seed for default CardTemplate (wrangler d1 execute) |
+| `workers/shared/db/seed.ts`                     | Default template constant for programmatic use          |
+| `workers/api/handlers/export_command.ts`        | /export handler orchestration                           |
+| `workers/api/handlers/export_command_test.ts`   | Tests for export handler                                |
+| `workers/api/adapters/telegram_notification.ts` | ChatNotificationPort impl for api worker                |
 
 ### Modified files
-| File | Changes |
-|------|---------|
-| `workers/shared/domain/errors.ts` | Add `ExportError`, `ErrorClassification`, `classifyError()` |
-| `workers/shared/domain/user.ts` | Add `activeTemplateId` field |
-| `workers/shared/domain/card_template.ts` | Add `NewCardTemplate` type |
-| `workers/shared/domain/mod.ts` | Re-export new types |
-| `workers/shared/mod.ts` | Re-export new types |
-| `workers/shared/db/schema.ts` | Add `active_template_id` column to users |
-| `workers/shared/ports/card_repository.ts` | Add `findReadyByUserId()`, `markExported()` |
-| `workers/shared/ports/user_repository.ts` | Add `updateActiveTemplate()` |
-| `workers/shared/ports/template_repository.ts` | Add `create()`, `findDefault()` |
-| `workers/shared/adapters/d1_card_repository.ts` | Implement new methods |
-| `workers/shared/adapters/d1_template_repository.ts` | Implement new methods |
-| `workers/shared/adapters/d1_user_repository.ts` | Add `activeTemplateId` to domain mapping, add `updateActiveTemplate()` |
-| `workers/api/adapters/telegram_webhook.ts` | Register /export, plain text handler, template fallback |
-| `workers/api/services/submit_word.ts` | Use `user.activeTemplateId` with fallback |
-| `workers/api/test_helpers.ts` | Update mocks for new port methods |
-| `workers/processor/index.ts` | Error classification + retry/ack logic + idempotency |
-| `workers/processor/adapters/telegram_notification.ts` | Implement `sendFile` |
-| `workers/processor/services/generate_card.ts` | Add idempotency guard |
-| `deno.jsonc` | Add `db:seed` task |
+
+| File                                                  | Changes                                                                |
+| ----------------------------------------------------- | ---------------------------------------------------------------------- |
+| `workers/shared/domain/errors.ts`                     | Add `ExportError`, `ErrorClassification`, `classifyError()`            |
+| `workers/shared/domain/user.ts`                       | Add `activeTemplateId` field                                           |
+| `workers/shared/domain/card_template.ts`              | Add `NewCardTemplate` type                                             |
+| `workers/shared/domain/mod.ts`                        | Re-export new types                                                    |
+| `workers/shared/mod.ts`                               | Re-export new types                                                    |
+| `workers/shared/db/schema.ts`                         | Add `active_template_id` column to users                               |
+| `workers/shared/ports/card_repository.ts`             | Add `findReadyByUserId()`, `markExported()`                            |
+| `workers/shared/ports/user_repository.ts`             | Add `updateActiveTemplate()`                                           |
+| `workers/shared/ports/template_repository.ts`         | Add `create()`, `findDefault()`                                        |
+| `workers/shared/adapters/d1_card_repository.ts`       | Implement new methods                                                  |
+| `workers/shared/adapters/d1_template_repository.ts`   | Implement new methods                                                  |
+| `workers/shared/adapters/d1_user_repository.ts`       | Add `activeTemplateId` to domain mapping, add `updateActiveTemplate()` |
+| `workers/api/adapters/telegram_webhook.ts`            | Register /export, plain text handler, template fallback                |
+| `workers/api/services/submit_word.ts`                 | Use `user.activeTemplateId` with fallback                              |
+| `workers/api/test_helpers.ts`                         | Update mocks for new port methods                                      |
+| `workers/processor/index.ts`                          | Error classification + retry/ack logic + idempotency                   |
+| `workers/processor/adapters/telegram_notification.ts` | Implement `sendFile`                                                   |
+| `workers/processor/services/generate_card.ts`         | Add idempotency guard                                                  |
+| `deno.jsonc`                                          | Add `db:seed` task                                                     |
 
 ---
 
 ## Task 1: Domain & Error Types
 
 **Files:**
+
 - Modify: `workers/shared/domain/errors.ts`
 - Modify: `workers/shared/domain/user.ts`
 - Modify: `workers/shared/domain/card_template.ts`
@@ -140,6 +147,7 @@ export type ReadyCard = Card & { readonly templateId: number };
 - [ ] **Step 5: Update mod.ts re-exports**
 
 In `workers/shared/domain/mod.ts`, add:
+
 ```typescript
 export type { ReadyCard } from "./ready_card.ts";
 export type { NewCardTemplate } from "./card_template.ts";
@@ -149,6 +157,7 @@ export type { ErrorClassification } from "./errors.ts";
 ```
 
 In `workers/shared/mod.ts`, add:
+
 ```typescript
 export type { ReadyCard } from "./domain/ready_card.ts";
 export type { NewCardTemplate } from "./domain/card_template.ts";
@@ -159,8 +168,7 @@ export type { ErrorClassification } from "./domain/errors.ts";
 
 - [ ] **Step 6: Run checks**
 
-Run: `deno task check`
-Expected: PASS (no type errors, lint clean)
+Run: `deno task check` Expected: PASS (no type errors, lint clean)
 
 - [ ] **Step 7: Commit**
 
@@ -174,6 +182,7 @@ git commit -m "feat(shared): add ExportError, ReadyCard, NewCardTemplate, classi
 ## Task 2: Schema Migration & Port Extensions
 
 **Files:**
+
 - Modify: `workers/shared/db/schema.ts`
 - Modify: `workers/shared/ports/card_repository.ts`
 - Modify: `workers/shared/ports/user_repository.ts`
@@ -247,13 +256,12 @@ export interface TemplateRepositoryPort {
 
 - [ ] **Step 5: Generate migration**
 
-Run: `deno task db:generate`
-Expected: New migration file created in `workers/shared/db/migrations/`
+Run: `deno task db:generate` Expected: New migration file created in `workers/shared/db/migrations/`
 
 - [ ] **Step 6: Run checks**
 
-Run: `deno task check`
-Expected: Expect type errors in adapter implementations (they don't implement the new methods yet). That's OK — Task 3 fixes them.
+Run: `deno task check` Expected: Expect type errors in adapter implementations (they don't implement the new methods
+yet). That's OK — Task 3 fixes them.
 
 - [ ] **Step 7: Commit**
 
@@ -267,6 +275,7 @@ git commit -m "feat(shared): extend ports with findReadyByUserId, markExported, 
 ## Task 3: Adapter Implementations
 
 **Files:**
+
 - Modify: `workers/shared/adapters/d1_card_repository.ts`
 - Modify: `workers/shared/adapters/d1_template_repository.ts`
 - Modify: `workers/shared/adapters/d1_user_repository.ts`
@@ -307,7 +316,8 @@ markExported(ids: readonly number[]): ResultAsync<void, RepositoryError> {
 }
 ```
 
-Add imports: `import { and, eq, inArray, notInArray } from "drizzle-orm";` and `import { okAsync } from "neverthrow";` and `import type { ReadyCard } from "../domain/mod.ts";`
+Add imports: `import { and, eq, inArray, notInArray } from "drizzle-orm";` and `import { okAsync } from "neverthrow";`
+and `import type { ReadyCard } from "../domain/mod.ts";`
 
 - [ ] **Step 2: Implement findDefault and create in D1TemplateRepository**
 
@@ -457,22 +467,40 @@ function mockCardRepo(overrides?: Partial<CardRepositoryPort>): CardRepositoryPo
 function mockUserRepo(overrides?: Partial<UserRepositoryPort>): UserRepositoryPort {
   return {
     upsert: () =>
-      okAsync({ telegramId: 100, firstName: "Test", languageCode: null, activeTemplateId: null, createdAt: "2026-01-01T00:00:00Z" }),
+      okAsync({
+        telegramId: 100,
+        firstName: "Test",
+        languageCode: null,
+        activeTemplateId: null,
+        createdAt: "2026-01-01T00:00:00Z",
+      }),
     findByTelegramId: () =>
-      okAsync({ telegramId: 100, firstName: "Test", languageCode: null, activeTemplateId: null, createdAt: "2026-01-01T00:00:00Z" }),
+      okAsync({
+        telegramId: 100,
+        firstName: "Test",
+        languageCode: null,
+        activeTemplateId: null,
+        createdAt: "2026-01-01T00:00:00Z",
+      }),
     updateActiveTemplate: () =>
-      okAsync({ telegramId: 100, firstName: "Test", languageCode: null, activeTemplateId: null, createdAt: "2026-01-01T00:00:00Z" }),
+      okAsync({
+        telegramId: 100,
+        firstName: "Test",
+        languageCode: null,
+        activeTemplateId: null,
+        createdAt: "2026-01-01T00:00:00Z",
+      }),
     ...overrides,
   };
 }
 ```
 
-Also update `workers/processor/services/generate_card_test.ts` mock factories similarly — add `findReadyByUserId` and `markExported` to `mockCardRepo`.
+Also update `workers/processor/services/generate_card_test.ts` mock factories similarly — add `findReadyByUserId` and
+`markExported` to `mockCardRepo`.
 
 - [ ] **Step 5: Run checks and tests**
 
-Run: `deno task check && deno task test`
-Expected: PASS
+Run: `deno task check && deno task test` Expected: PASS
 
 - [ ] **Step 6: Commit**
 
@@ -486,6 +514,7 @@ git commit -m "feat(shared): implement adapter extensions for findReadyByUserId,
 ## Task 4: exportCards Pure Function (TDD)
 
 **Files:**
+
 - Create: `workers/shared/services/export_cards.ts`
 - Create: `workers/shared/services/export_cards_test.ts`
 
@@ -642,8 +671,7 @@ describe("exportCards", () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `deno test --allow-env workers/shared/services/export_cards_test.ts`
-Expected: FAIL (module not found)
+Run: `deno test --allow-env workers/shared/services/export_cards_test.ts` Expected: FAIL (module not found)
 
 - [ ] **Step 3: Implement exportCards**
 
@@ -705,13 +733,11 @@ export function exportCards(input: ExportCardsInput): Result<ExportCardsResult, 
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `deno test --allow-env workers/shared/services/export_cards_test.ts`
-Expected: All 6 tests PASS
+Run: `deno test --allow-env workers/shared/services/export_cards_test.ts` Expected: All 6 tests PASS
 
 - [ ] **Step 5: Run full checks**
 
-Run: `deno task check && deno task test`
-Expected: PASS
+Run: `deno task check && deno task test` Expected: PASS
 
 - [ ] **Step 6: Commit**
 
@@ -725,12 +751,14 @@ git commit -m "feat(shared): add exportCards pure function for TSV generation"
 ## Task 5: Seed Default Template
 
 **Files:**
+
 - Create: `workers/shared/db/seed.ts`
 - Modify: `deno.jsonc`
 
 - [ ] **Step 1: Create seed SQL file**
 
-Create `workers/shared/db/seed.sql` with the default template data. This is executed via `wrangler d1 execute` which has direct D1 access:
+Create `workers/shared/db/seed.sql` with the default template data. This is executed via `wrangler d1 execute` which has
+direct D1 access:
 
 ```sql
 INSERT OR IGNORE INTO card_templates (name, prompt_template, response_json_schema, anki_note_type, anki_fields_mapping, is_active)
@@ -815,8 +843,7 @@ Add to `tasks` in `deno.jsonc`:
 
 - [ ] **Step 3: Run checks**
 
-Run: `deno task check`
-Expected: PASS
+Run: `deno task check` Expected: PASS
 
 - [ ] **Step 4: Commit**
 
@@ -830,6 +857,7 @@ git commit -m "feat(shared): add seed script for default Vocabulary template"
 ## Task 6: Implement sendFile in Telegram Notification Adapter
 
 **Files:**
+
 - Modify: `workers/processor/adapters/telegram_notification.ts`
 
 - [ ] **Step 1: Replace sendFile stub with implementation**
@@ -886,8 +914,7 @@ Add `okAsync` to the neverthrow import.
 
 - [ ] **Step 2: Run checks**
 
-Run: `deno task check`
-Expected: PASS
+Run: `deno task check` Expected: PASS
 
 - [ ] **Step 3: Commit**
 
@@ -901,11 +928,13 @@ git commit -m "feat(processor): implement sendFile in Telegram notification adap
 ## Task 7: API-side Telegram Notification Adapter
 
 **Files:**
+
 - Create: `workers/api/adapters/telegram_notification.ts`
 
 - [ ] **Step 1: Create api-side adapter**
 
-Create `workers/api/adapters/telegram_notification.ts` that re-exports the processor's factory function. Both workers use the same Telegram Bot API — the adapter is identical:
+Create `workers/api/adapters/telegram_notification.ts` that re-exports the processor's factory function. Both workers
+use the same Telegram Bot API — the adapter is identical:
 
 ```typescript
 // Re-export the shared Telegram notification adapter factory.
@@ -914,23 +943,25 @@ export { createTelegramNotification } from "../../processor/adapters/telegram_no
 export type { TelegramNotificationConfig } from "../../processor/adapters/telegram_notification.ts";
 ```
 
-Wait — this violates the import direction rule: `api/` must not import `processor/`. Instead, move the factory to `shared/adapters/` and have both workers import from there.
+Wait — this violates the import direction rule: `api/` must not import `processor/`. Instead, move the factory to
+`shared/adapters/` and have both workers import from there.
 
-**Revised approach:** Move `telegram_notification.ts` from `workers/processor/adapters/` to `workers/shared/adapters/` and update imports.
+**Revised approach:** Move `telegram_notification.ts` from `workers/processor/adapters/` to `workers/shared/adapters/`
+and update imports.
 
 - [ ] **Step 1 (revised): Move telegram_notification.ts to shared/adapters/**
 
 Move `workers/processor/adapters/telegram_notification.ts` → `workers/shared/adapters/telegram_notification.ts`
 
 Update `workers/processor/index.ts` import:
+
 ```typescript
 import { createTelegramNotification } from "../shared/adapters/telegram_notification.ts";
 ```
 
 - [ ] **Step 2: Run checks and tests**
 
-Run: `deno task check && deno task test`
-Expected: PASS
+Run: `deno task check && deno task test` Expected: PASS
 
 - [ ] **Step 3: Commit**
 
@@ -944,6 +975,7 @@ git commit -m "refactor: move TelegramNotification adapter to shared layer for r
 ## Task 8: /export Handler (TDD)
 
 **Files:**
+
 - Create: `workers/api/handlers/export_command.ts`
 - Create: `workers/api/handlers/export_command_test.ts`
 
@@ -954,18 +986,18 @@ Create `workers/api/handlers/export_command_test.ts`:
 ```typescript
 import { assertEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
-import { okAsync, errAsync } from "neverthrow";
+import { errAsync, okAsync } from "neverthrow";
 import type {
   Card,
   CardRepositoryPort,
+  CardTemplate,
   ChatNotificationPort,
   NewCard,
   ReadyCard,
   TemplateRepositoryPort,
-  CardTemplate,
 } from "../../shared/mod.ts";
-import type { RepositoryError, NotificationError } from "../../shared/domain/errors.ts";
-import { handleExport, type ExportDeps } from "./export_command.ts";
+import type { NotificationError, RepositoryError } from "../../shared/domain/errors.ts";
+import { type ExportDeps, handleExport } from "./export_command.ts";
 
 const template: CardTemplate = {
   id: 1,
@@ -1036,7 +1068,9 @@ describe("handleExport", () => {
 
     result.match(
       (val) => assertEquals(val.exported, 0),
-      (err) => { throw new Error(`Expected ok, got: ${err.message}`); },
+      (err) => {
+        throw new Error(`Expected ok, got: ${err.message}`);
+      },
     );
   });
 
@@ -1052,7 +1086,10 @@ describe("handleExport", () => {
     const deps: ExportDeps = {
       cardRepo: mockCardRepo({
         findReadyByUserId: () => okAsync(readyCards),
-        markExported: (ids) => { markedIds = ids; return okAsync(undefined); },
+        markExported: (ids) => {
+          markedIds = ids;
+          return okAsync(undefined);
+        },
       }),
       templateRepo: mockTemplateRepo(),
       notification: mockNotification({
@@ -1072,7 +1109,9 @@ describe("handleExport", () => {
         assertEquals(sentFile?.filename, "anki_export.txt");
         assertEquals(markedIds, [1, 2]);
       },
-      (err) => { throw new Error(`Expected ok, got: ${err.message}`); },
+      (err) => {
+        throw new Error(`Expected ok, got: ${err.message}`);
+      },
     );
   });
 
@@ -1086,7 +1125,10 @@ describe("handleExport", () => {
     const deps: ExportDeps = {
       cardRepo: mockCardRepo({
         findReadyByUserId: () => okAsync(readyCards),
-        markExported: () => { markExportedCalled = true; return okAsync(undefined); },
+        markExported: () => {
+          markExportedCalled = true;
+          return okAsync(undefined);
+        },
       }),
       templateRepo: mockTemplateRepo(),
       notification: mockNotification({
@@ -1097,7 +1139,9 @@ describe("handleExport", () => {
     const result = await handleExport({ userId: 1, chatId: "123" }, deps);
 
     result.match(
-      () => { throw new Error("Expected error"); },
+      () => {
+        throw new Error("Expected error");
+      },
       (err) => {
         assertEquals(err.kind, "notification");
         assertEquals(markExportedCalled, false);
@@ -1109,8 +1153,7 @@ describe("handleExport", () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `deno test --allow-env workers/api/handlers/export_command_test.ts`
-Expected: FAIL (module not found)
+Run: `deno test --allow-env workers/api/handlers/export_command_test.ts` Expected: FAIL (module not found)
 
 - [ ] **Step 3: Implement handleExport**
 
@@ -1118,12 +1161,7 @@ Create `workers/api/handlers/export_command.ts`:
 
 ```typescript
 import { errAsync, okAsync, type ResultAsync } from "neverthrow";
-import type {
-  CardRepositoryPort,
-  ChatNotificationPort,
-  ReadyCard,
-  TemplateRepositoryPort,
-} from "../../shared/mod.ts";
+import type { CardRepositoryPort, ChatNotificationPort, ReadyCard, TemplateRepositoryPort } from "../../shared/mod.ts";
 import type { ExportError, NotificationError, RepositoryError } from "../../shared/domain/errors.ts";
 import { exportCards } from "../../shared/services/export_cards.ts";
 
@@ -1201,13 +1239,11 @@ export function handleExport(
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `deno test --allow-env workers/api/handlers/export_command_test.ts`
-Expected: All 3 tests PASS
+Run: `deno test --allow-env workers/api/handlers/export_command_test.ts` Expected: All 3 tests PASS
 
 - [ ] **Step 5: Run full checks**
 
-Run: `deno task check && deno task test`
-Expected: PASS
+Run: `deno task check && deno task test` Expected: PASS
 
 - [ ] **Step 6: Commit**
 
@@ -1221,12 +1257,14 @@ git commit -m "feat(api): add /export handler with TDD"
 ## Task 9: Wire /export and Plain Text into Telegram Webhook
 
 **Files:**
+
 - Modify: `workers/api/adapters/telegram_webhook.ts`
 - Modify: `workers/api/services/submit_word.ts`
 
 - [ ] **Step 1: Update submitWord to use template fallback**
 
-In `workers/api/services/submit_word.ts`, change `SubmitWordInput` to accept optional templateId and add template resolution:
+In `workers/api/services/submit_word.ts`, change `SubmitWordInput` to accept optional templateId and add template
+resolution:
 
 ```typescript
 export type SubmitWordInput = {
@@ -1259,7 +1297,7 @@ import { CfQueue } from "./cf_queue.ts";
 import { createTelegramNotification } from "../../shared/adapters/telegram_notification.ts";
 import { parseAddCommand } from "../handlers/add_command.ts";
 import { submitWord, type SubmitWordDeps } from "../services/submit_word.ts";
-import { handleExport, type ExportDeps } from "../handlers/export_command.ts";
+import { type ExportDeps, handleExport } from "../handlers/export_command.ts";
 
 let cachedBotInfo: UserFromGetMe | undefined;
 
@@ -1470,8 +1508,7 @@ function registerPlainTextHandler(
 
 - [ ] **Step 3: Run checks and tests**
 
-Run: `deno task check && deno task test`
-Expected: PASS
+Run: `deno task check && deno task test` Expected: PASS
 
 - [ ] **Step 4: Commit**
 
@@ -1485,12 +1522,14 @@ git commit -m "feat(api): wire /export command and plain text handler into teleg
 ## Task 10: Error Handling & Retry in Processor
 
 **Files:**
+
 - Modify: `workers/processor/services/generate_card.ts`
 - Modify: `workers/processor/index.ts`
 
 - [ ] **Step 1: Add idempotency guard to generateCard**
 
-In `workers/processor/services/generate_card.ts`, after finding the card, add a status check before `updateStatus(GENERATING)`:
+In `workers/processor/services/generate_card.ts`, after finding the card, add a status check before
+`updateStatus(GENERATING)`:
 
 ```typescript
 // After: if (!card) { ... }
@@ -1582,12 +1621,12 @@ for (const msg of batch.messages) {
 }
 ```
 
-Each branch explicitly calls `ack()` or `retry()`. The outer `try/catch` is a safety net for unexpected throws — retries by default since the failure is likely transient.
+Each branch explicitly calls `ack()` or `retry()`. The outer `try/catch` is a safety net for unexpected throws — retries
+by default since the failure is likely transient.
 
 - [ ] **Step 3: Run checks and tests**
 
-Run: `deno task check && deno task test`
-Expected: PASS
+Run: `deno task check && deno task test` Expected: PASS
 
 - [ ] **Step 4: Commit**
 
@@ -1604,13 +1643,11 @@ git commit -m "feat(processor): add error classification, retry/ack logic, and i
 
 - [ ] **Step 1: Run all automated checks**
 
-Run: `deno task check`
-Expected: PASS (type-check + lint + format)
+Run: `deno task check` Expected: PASS (type-check + lint + format)
 
 - [ ] **Step 2: Run all tests**
 
-Run: `deno task test`
-Expected: All tests PASS
+Run: `deno task test` Expected: All tests PASS
 
 - [ ] **Step 3: Verify structured log output**
 

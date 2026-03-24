@@ -1,19 +1,22 @@
 # M5: Export & Polish — Design Spec
 
-**Date:** 2026-03-24
-**Milestone:** #5 — Export & Polish
-**Issues:** #19, #20, #21, #22, #23, #24, #25
+**Date:** 2026-03-24 **Milestone:** #5 — Export & Polish **Issues:** #19, #20, #21, #22, #23, #24, #25
 
 ## Overview
 
-M5 delivers the Anki export pipeline and polishes the system for end-to-end usability. Users can generate vocabulary cards via Telegram and export them as TSV files for direct Anki import. TTS is handled on the Anki client side, not server-side.
+M5 delivers the Anki export pipeline and polishes the system for end-to-end usability. Users can generate vocabulary
+cards via Telegram and export them as TSV files for direct Anki import. TTS is handled on the Anki client side, not
+server-side.
 
 ## Design Decisions
 
-- **TTS on client:** Audio generation is not performed server-side. Anki client uses its own TTS API or system TTS at runtime. `audioR2Key` field is retained in schema but deprecated (no writes, ignored on export).
+- **TTS on client:** Audio generation is not performed server-side. Anki client uses its own TTS API or system TTS at
+  runtime. `audioR2Key` field is retained in schema but deprecated (no writes, ignored on export).
 - **Export format:** Pure TSV file sent via Telegram, no ZIP packaging needed.
-- **Template-driven:** Card fields, prompts, and schema constraints are stored as configuration in D1 (`card_templates` table), not hardcoded.
-- **Language-agnostic:** Templates do not hardcode language pairs. The prompt guides the LLM to infer source/target languages from context.
+- **Template-driven:** Card fields, prompts, and schema constraints are stored as configuration in D1 (`card_templates`
+  table), not hardcoded.
+- **Language-agnostic:** Templates do not hardcode language pairs. The prompt guides the LLM to infer source/target
+  languages from context.
 
 ## §1: Data Model Changes
 
@@ -25,8 +28,11 @@ ALTER TABLE users ADD COLUMN active_template_id INTEGER REFERENCES card_template
 
 - Nullable. `NULL` means "use system default template".
 - Domain type `User` gains `activeTemplateId: number | null`.
-- `submit_word` replaces `DEFAULT_TEMPLATE_ID = 1` with: check `user.activeTemplateId`, fallback to `templateRepo.findDefault()`.
-- `activeTemplateId` is **not** part of `upsert`. A separate `UserRepositoryPort.updateActiveTemplate(telegramId: number, templateId: number | null)` method is added for future template switching. `upsert` continues to handle user creation with name and language code only.
+- `submit_word` replaces `DEFAULT_TEMPLATE_ID = 1` with: check `user.activeTemplateId`, fallback to
+  `templateRepo.findDefault()`.
+- `activeTemplateId` is **not** part of `upsert`. A separate
+  `UserRepositoryPort.updateActiveTemplate(telegramId: number, templateId: number | null)` method is added for future
+  template switching. `upsert` continues to handle user creation with name and language code only.
 
 ### 1.2 `card_templates` — no structural changes
 
@@ -42,13 +48,15 @@ Column stays in schema to avoid migration churn. No code writes to it. Export lo
 
 Create `workers/shared/db/seed.ts`. Register as `deno task db:seed` in `deno.jsonc`.
 
-The seed script connects to the local D1 database via wrangler's local persistence (same mechanism as `deno task dev:api`). Performs `INSERT OR IGNORE` of one default template.
+The seed script connects to the local D1 database via wrangler's local persistence (same mechanism as
+`deno task dev:api`). Performs `INSERT OR IGNORE` of one default template.
 
 ### 2.2 Default template content
 
 **name:** `"Vocabulary"`
 
 **promptTemplate:**
+
 ```
 You are a language learning assistant. The user is learning vocabulary.
 
@@ -67,6 +75,7 @@ Respond in JSON matching the provided schema.
 ```
 
 **responseJsonSchema:**
+
 ```json
 {
   "type": "object",
@@ -83,6 +92,7 @@ Respond in JSON matching the provided schema.
 ```
 
 **ankiFieldsMapping:**
+
 ```json
 {
   "Front": "word",
@@ -99,6 +109,7 @@ Respond in JSON matching the provided schema.
 ### 2.3 TemplateRepositoryPort extensions
 
 New methods:
+
 - `create(template: NewCardTemplate): ResultAsync<CardTemplate, RepositoryError>`
 - `findDefault(): ResultAsync<CardTemplate | null, RepositoryError>` — queries first record with `isActive = true`
 
@@ -106,7 +117,8 @@ New methods:
 
 ### 3.1 `exportCards` pure function (Task 19)
 
-Location: `workers/shared/services/export_cards.ts` (shared layer — pure function on domain types, reusable by both api and processor)
+Location: `workers/shared/services/export_cards.ts` (shared layer — pure function on domain types, reusable by both api
+and processor)
 
 ```typescript
 type ExportCardsInput = {
@@ -119,12 +131,13 @@ type ExportCardsResult = {
   cardIds: readonly number[];
 };
 
-function exportCards(input: ExportCardsInput): Result<ExportCardsResult, ExportError>
+function exportCards(input: ExportCardsInput): Result<ExportCardsResult, ExportError>;
 ```
 
 `ExportError` is defined in `shared/domain/errors.ts`: `{ readonly kind: "export"; readonly message: string }`.
 
 Logic:
+
 1. Parse each card's `llmResponseJson`
 2. Map fields according to `template.ankiFieldsMapping`
 3. Sanitize field values: replace `\t` with spaces, `\n`/`\r` with spaces (LLM output may contain these)
@@ -139,6 +152,7 @@ Pure function, no I/O.
 Location: `workers/api/handlers/export_command.ts`
 
 Handler orchestration:
+
 ```
 1. cardRepo.findReadyByUserId(userId) → returns cards with templateId (joined through submissions)
 2. No ready cards → reply "No cards ready for export."
@@ -149,18 +163,25 @@ Handler orchestration:
 ```
 
 **Key decisions:**
+
 - **Send first, mark after.** If send fails, cards stay `ready` and user can retry.
 - **`markExported` only updates cards with status `ready`** (WHERE clause guard), preventing race conditions.
 
 ### 3.3 CardRepositoryPort extensions (Task 21)
 
 New methods:
-- `findReadyByUserId(userId: number): ResultAsync<readonly ReadyCard[], RepositoryError>` — joins `cards` with `submissions` to filter by userId and include `templateId`. Returns `ReadyCard = Card & { templateId: number }`.
-- `markExported(ids: readonly number[]): ResultAsync<void, RepositoryError>` — batch update status to `exported`, with `WHERE status = 'ready'` guard.
+
+- `findReadyByUserId(userId: number): ResultAsync<readonly ReadyCard[], RepositoryError>` — joins `cards` with
+  `submissions` to filter by userId and include `templateId`. Returns `ReadyCard = Card & { templateId: number }`.
+- `markExported(ids: readonly number[]): ResultAsync<void, RepositoryError>` — batch update status to `exported`, with
+  `WHERE status = 'ready'` guard.
 
 ### 3.4 Reuse `ChatNotificationPort` for file sending
 
-The existing `ChatNotificationPort` already declares `sendFile(chatId, file, filename, caption?)`. Rather than creating a separate `FileSenderPort`, the `/export` handler depends on `Pick<ChatNotificationPort, "sendFile">`. The api worker creates its own Telegram adapter implementing `ChatNotificationPort` (the processor already has one). The existing stub `sendFile` implementation is completed.
+The existing `ChatNotificationPort` already declares `sendFile(chatId, file, filename, caption?)`. Rather than creating
+a separate `FileSenderPort`, the `/export` handler depends on `Pick<ChatNotificationPort, "sendFile">`. The api worker
+creates its own Telegram adapter implementing `ChatNotificationPort` (the processor already has one). The existing stub
+`sendFile` implementation is completed.
 
 ## §4: Error Handling & Retry (Task 23)
 
@@ -169,11 +190,13 @@ The existing `ChatNotificationPort` already declares `sendFile(chatId, file, fil
 ```typescript
 // shared/domain/errors.ts
 type ErrorClassification = "transient" | "permanent";
-function classifyError(error: { kind: string; message: string }): ErrorClassification
+function classifyError(error: { kind: string; message: string }): ErrorClassification;
 ```
 
 Classification rules by error kind:
-- **`llm`**: transient by default (network/rate-limit/5xx); permanent if message contains "schema" or "parse" (invalid LLM output)
+
+- **`llm`**: transient by default (network/rate-limit/5xx); permanent if message contains "schema" or "parse" (invalid
+  LLM output)
 - **`repository`**: transient by default (D1 temporary unavailability); permanent if "not found" (missing data)
 - **`tts`**: N/A (TTS moved to client)
 - **`notification`**: transient (Telegram API errors are retryable)
@@ -195,7 +218,8 @@ All paths emit structured logs: `{ event, cardId, errorClassification, error }`.
 
 ### 4.3 Idempotency guard
 
-`generateCard` checks card status at entry: if already `ready`/`exported`/`failed`, return success immediately. Prevents duplicate processing on retry.
+`generateCard` checks card status at entry: if already `ready`/`exported`/`failed`, return success immediately. Prevents
+duplicate processing on retry.
 
 ## §5: Plain Text Message Support (Task 24)
 
@@ -212,17 +236,20 @@ User sends plain text (not a /command)
 
 ### 5.2 Silent on parse failure
 
-Unlike `/add` which replies with usage hint on parse failure, plain text handler is **silent** on failure to avoid responding to unrelated messages.
+Unlike `/add` which replies with usage hint on parse failure, plain text handler is **silent** on failure to avoid
+responding to unrelated messages.
 
 ### 5.3 Registration order
 
-Commands registered first (`bot.command("add")`, `bot.command("export")`, etc.), then `bot.on("message:text")` last as fallback. Command messages do not reach the plain text handler.
+Commands registered first (`bot.command("add")`, `bot.command("export")`, etc.), then `bot.on("message:text")` last as
+fallback. Command messages do not reach the plain text handler.
 
 ## §6: Integration Verification (Task 25)
 
 ### 6.1 Automated checks
 
 Must all pass:
+
 - `deno task check` — type-check + lint + format
 - `deno test` — all unit tests
 
@@ -249,6 +276,7 @@ Requires local `.dev.vars` with real Telegram bot token:
 ## File Changes Summary
 
 ### New files
+
 - `workers/shared/db/seed.ts` — seed default template
 - `workers/shared/services/export_cards.ts` — pure TSV generation function
 - `workers/shared/services/export_cards_test.ts` — tests
@@ -257,6 +285,7 @@ Requires local `.dev.vars` with real Telegram bot token:
 - `workers/api/adapters/telegram_notification.ts` — ChatNotificationPort impl for api worker
 
 ### Modified files
+
 - `workers/shared/db/schema.ts` — users.active_template_id column
 - `workers/shared/domain/user.ts` — activeTemplateId field
 - `workers/shared/domain/errors.ts` — ExportError, ErrorClassification, classifyError
