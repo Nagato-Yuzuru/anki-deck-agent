@@ -10,6 +10,11 @@ export type { Card, CardUpdateFields, NewCard } from "./domain/card.ts";
 export type { CardTemplate } from "./domain/card_template.ts";
 export type { NewSubmission, Submission, SubmissionUpdateFields } from "./domain/submission.ts";
 export type { LlmError, NotificationError, QueueError, RepositoryError, TtsError } from "./domain/errors.ts";
+export type { ReadyCard } from "./domain/ready_card.ts";
+export type { NewCardTemplate } from "./domain/card_template.ts";
+export type { ExportError } from "./domain/errors.ts";
+export { classifyError } from "./domain/errors.ts";
+export type { ErrorClassification } from "./domain/errors.ts";
 
 // DB schema (adapter-only)
 export { cards, cardTemplates, submissions, users } from "./db/schema.ts";
@@ -36,6 +41,10 @@ export type { CardRepositoryPort } from "./ports/card_repository.ts";
 export type { SubmissionRepositoryPort } from "./ports/submission_repository.ts";
 export type { UserRepositoryPort } from "./ports/user_repository.ts";
 export type { TemplateRepositoryPort } from "./ports/template_repository.ts";
+
+// Adapters
+export { createTelegramNotification } from "./adapters/telegram_notification.ts";
+export type { TelegramNotificationConfig } from "./adapters/telegram_notification.ts";
 
 // Env bindings
 export type { ApiEnv, BaseEnv, ProcessorEnv } from "./env.ts";

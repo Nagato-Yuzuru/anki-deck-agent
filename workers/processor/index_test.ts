@@ -7,14 +7,18 @@ function mockMessage(body: unknown): {
   ack: () => void;
   retry: () => void;
   acked: boolean;
+  retried: boolean;
 } {
   const msg = {
     body,
     acked: false,
+    retried: false,
     ack(): void {
       this.acked = true;
     },
-    retry(): void {},
+    retry(): void {
+      this.retried = true;
+    },
   };
   return msg;
 }
@@ -47,13 +51,15 @@ describe("Processor queue consumer", () => {
     assertEquals(typeof processor.queue, "function");
   });
 
-  it("acks generate_card messages", async () => {
+  it("retries generate_card messages when DB fails (transient error)", async () => {
     const msg = mockMessage({ type: "generate_card", cardId: 1 });
     const batch = mockBatch([msg]);
 
+    // DB is empty mock — generateCard returns a transient RepositoryError → retry
     await processor.queue(batch as never, mockEnv as never, mockCtx);
 
-    assertEquals(msg.acked, true);
+    assertEquals(msg.retried, true);
+    assertEquals(msg.acked, false);
   });
 
   it("acks unknown message types without throwing", async () => {
@@ -69,9 +75,10 @@ describe("Processor queue consumer", () => {
     const msg = mockMessage({ type: "generate_card", cardId: 1 });
     const batch = mockBatch([msg]);
 
-    // DB is mocked as empty object — generateCard will fail internally, but should not throw
+    // DB is mocked as empty object — generateCard will fail internally, but should not throw.
+    // Transient repository error → message is retried, not acked.
     await processor.queue(batch as never, mockEnv as never, mockCtx);
 
-    assertEquals(msg.acked, true);
+    assertEquals(msg.retried, true);
   });
 });

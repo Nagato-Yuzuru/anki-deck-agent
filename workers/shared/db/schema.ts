@@ -3,13 +3,6 @@ import type { CardStatus } from "../domain/card_status.ts";
 import type { Language } from "../domain/language.ts";
 import type { SubmissionStatus } from "../domain/submission_status.ts";
 
-export const users = sqliteTable("users", {
-  telegramId: integer("telegram_id").primaryKey(),
-  firstName: text("first_name").notNull(),
-  languageCode: text("language_code").$type<Language>(),
-  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
-});
-
 export const cardTemplates = sqliteTable("card_templates", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").unique().notNull(),
@@ -18,6 +11,14 @@ export const cardTemplates = sqliteTable("card_templates", {
   ankiNoteType: text("anki_note_type").notNull(),
   ankiFieldsMapping: text("anki_fields_mapping").notNull(),
   isActive: integer("is_active").notNull().default(1),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const users = sqliteTable("users", {
+  telegramId: integer("telegram_id").primaryKey(),
+  firstName: text("first_name").notNull(),
+  languageCode: text("language_code").$type<Language>(),
+  activeTemplateId: integer("active_template_id").references(() => cardTemplates.id),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 

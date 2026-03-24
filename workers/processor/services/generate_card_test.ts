@@ -59,6 +59,8 @@ function mockCardRepo(overrides?: Partial<CardRepositoryPort>): CardRepositoryPo
     findActiveByUserIdAndWord: () => okAsync(null),
     create: (_c: NewCard) => okAsync(sampleCard),
     updateStatus: (_id, _status, _fields?) => okAsync({ ...sampleCard, status: _status, ..._fields }),
+    findReadyByUserId: () => okAsync([]),
+    markExported: () => okAsync(undefined),
     ...overrides,
   };
 }
@@ -75,6 +77,8 @@ function mockSubmissionRepo(overrides?: Partial<SubmissionRepositoryPort>): Subm
 function mockTemplateRepo(overrides?: Partial<TemplateRepositoryPort>): TemplateRepositoryPort {
   return {
     findById: () => okAsync(sampleTemplate),
+    findDefault: () => okAsync(sampleTemplate),
+    create: () => okAsync(sampleTemplate),
     ...overrides,
   };
 }

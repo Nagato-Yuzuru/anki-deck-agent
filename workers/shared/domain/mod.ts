@@ -9,3 +9,8 @@ export type { Card, CardUpdateFields, NewCard } from "./card.ts";
 export type { CardTemplate } from "./card_template.ts";
 export type { NewSubmission, Submission, SubmissionUpdateFields } from "./submission.ts";
 export type { LlmError, NotificationError, QueueError, RepositoryError, TtsError } from "./errors.ts";
+export type { ReadyCard } from "./ready_card.ts";
+export type { NewCardTemplate } from "./card_template.ts";
+export type { ExportError } from "./errors.ts";
+export { classifyError } from "./errors.ts";
+export type { ErrorClassification } from "./errors.ts";

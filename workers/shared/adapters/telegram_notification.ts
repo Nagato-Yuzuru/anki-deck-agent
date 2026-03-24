@@ -1,6 +1,6 @@
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
-import type { ChatNotificationPort } from "../../shared/mod.ts";
-import type { NotificationError } from "../../shared/domain/errors.ts";
+import type { ChatNotificationPort } from "../ports/chat_notification.ts";
+import type { NotificationError } from "../domain/errors.ts";
 
 export type TelegramNotificationConfig = {
   readonly botToken: string;
@@ -61,12 +61,49 @@ export function createTelegramNotification(config: TelegramNotificationConfig): 
     },
 
     sendFile(
-      _chatId: string,
-      _file: Uint8Array,
-      _filename: string,
-      _caption?: string,
+      chatId: string,
+      file: Uint8Array,
+      filename: string,
+      caption?: string,
     ): ResultAsync<void, NotificationError> {
-      return errAsync({ kind: "notification", message: "sendFile not implemented" });
+      const formData = new FormData();
+      formData.append("chat_id", chatId);
+      formData.append("document", new Blob([file.slice().buffer as ArrayBuffer]), filename);
+      if (caption) {
+        formData.append("caption", caption);
+      }
+
+      return ResultAsync.fromPromise(
+        fetchFn(`${baseUrl}/sendDocument`, {
+          method: "POST",
+          body: formData,
+        }),
+        (err): NotificationError => ({
+          kind: "notification",
+          message: `Fetch failed: ${err instanceof Error ? err.message : String(err)}`,
+        }),
+      ).andThen((response) => {
+        if (response.ok) {
+          console.log({ event: "file_sent", chatId, filename });
+          return okAsync(undefined);
+        }
+
+        return ResultAsync.fromPromise(
+          response.text(),
+          (err): NotificationError => ({
+            kind: "notification",
+            message: `HTTP ${response.status} (failed to read body: ${
+              err instanceof Error ? err.message : String(err)
+            })`,
+          }),
+        ).andThen((bodyText) => {
+          const truncatedBody = bodyText.length > 500 ? `${bodyText.slice(0, 500)}...` : bodyText;
+          return errAsync<void, NotificationError>({
+            kind: "notification",
+            message: `HTTP ${response.status}: ${truncatedBody}`,
+          });
+        });
+      });
     },
   };
 }
