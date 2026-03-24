@@ -131,20 +131,25 @@ describe("TelegramNotificationAdapter", () => {
   });
 
   describe("sendFile", () => {
-    it("returns NotificationError (not implemented)", async () => {
+    it("sends file successfully on 200", async () => {
+      let capturedUrl = "";
+
       const adapter = createTelegramNotification({
         botToken: "123:ABC",
-        fetchFn: () => Promise.resolve(new Response("", { status: 200 })),
+        fetchFn: (url) => {
+          capturedUrl = url as string;
+          return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+        },
       });
 
-      const result = await adapter.sendFile("chat-1", new Uint8Array(), "file.mp3");
+      const result = await adapter.sendFile("chat-1", new Uint8Array([1, 2, 3]), "export.txt");
 
       result.match(
         () => {
-          throw new Error("Expected Err");
+          assertEquals(capturedUrl, "https://api.telegram.org/bot123:ABC/sendDocument");
         },
         (err) => {
-          assertEquals(err.kind, "notification");
+          throw new Error(`Expected Ok, got Err: ${err.message}`);
         },
       );
     });
