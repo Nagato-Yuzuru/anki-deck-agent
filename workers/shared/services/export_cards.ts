@@ -31,14 +31,16 @@ export function exportCards(input: ExportCardsInput): Result<ExportCardsResult, 
   for (const card of input.cards) {
     if (card.llmResponseJson === null) continue;
 
-    let parsed: Record<string, unknown>;
+    let parsed: unknown;
     try {
-      parsed = JSON.parse(card.llmResponseJson) as Record<string, unknown>;
+      parsed = JSON.parse(card.llmResponseJson);
     } catch {
       continue;
     }
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) continue;
+    const record = parsed as Record<string, unknown>;
 
-    const fields = fieldKeys.map((key) => sanitize(String(parsed[key] ?? "")));
+    const fields = fieldKeys.map((key) => sanitize(String(record[key] ?? "")));
     rows.push(fields.join("\t"));
     cardIds.push(card.id);
   }

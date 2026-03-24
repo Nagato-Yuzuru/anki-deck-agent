@@ -72,7 +72,7 @@ export function handleExportCommand(
       if (readyCards.length === 0) {
         return errAsync<void, ExportCommandError>({
           kind: "export",
-          message: "No cards ready for export",
+          message: "No cards ready for export.",
         });
       }
 
@@ -87,7 +87,12 @@ export function handleExportCommand(
       // Process all template groups concurrently
       const groupsResult: ResultAsync<GroupResult[], ExportCommandError> = fromPromise(
         processGroupsAsync(cardsByTemplate, deps.templateRepo),
-        (thrown): ExportCommandError => thrown as ExportCommandError,
+        (thrown): ExportCommandError => {
+          if (typeof thrown === "object" && thrown !== null && "kind" in thrown && "message" in thrown) {
+            return thrown as ExportCommandError;
+          }
+          return { kind: "export", message: thrown instanceof Error ? thrown.message : String(thrown) };
+        },
       );
 
       return groupsResult.andThen((groups) => {

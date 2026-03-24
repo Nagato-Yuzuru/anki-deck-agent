@@ -237,7 +237,7 @@ describe("handleExportCommand", () => {
       },
       (err) => {
         assertEquals(err.kind, "export");
-        assertEquals(err.message, "No cards ready for export");
+        assertEquals(err.message, "No cards ready for export.");
       },
     );
   });
