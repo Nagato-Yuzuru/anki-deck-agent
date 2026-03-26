@@ -1,4 +1,5 @@
 import { Bot, webhookCallback } from "grammy";
+import type { Transformer } from "grammy";
 import type { UserFromGetMe } from "grammy/types";
 import type { ApiEnv, TemplateRepositoryPort } from "../../shared/mod.ts";
 import { D1CardRepository } from "../../shared/adapters/d1_card_repository.ts";
@@ -9,6 +10,7 @@ import { createTelegramNotification } from "../../shared/adapters/telegram_notif
 import { CfQueue } from "./cf_queue.ts";
 import { parseAddCommand } from "../handlers/add_command.ts";
 import { submitWord, type SubmitWordDeps } from "../services/submit_word.ts";
+import { resolveTemplate } from "../services/resolve_template.ts";
 import { type ExportCommandDeps, handleExportCommand } from "../handlers/export_command.ts";
 
 // Cache per isolate — immutable bot metadata, not mutable application state.
@@ -22,6 +24,7 @@ export type WebhookOptions = {
   readonly botInfo?: UserFromGetMe;
   readonly deps?: WebhookDeps;
   readonly exportDeps?: ExportCommandDeps;
+  readonly apiTransformer?: Transformer;
 };
 
 function buildDeps(env: ApiEnv): WebhookDeps {
@@ -55,6 +58,10 @@ export async function handleWebhook(
     cachedBotInfo = bot.botInfo;
   }
 
+  if (options?.apiTransformer) {
+    bot.api.config.use(options.apiTransformer);
+  }
+
   const deps = options?.deps ?? buildDeps(env);
   registerAddCommand(bot, deps);
   registerExportCommand(bot, env, options);
@@ -85,14 +92,14 @@ function registerAddCommand(bot: Bot, deps: WebhookDeps): void {
       return;
     }
 
-    const templateResult = await deps.templateRepo.findDefault();
+    const templateResult = await resolveTemplate(deps.userRepo, deps.templateRepo, from.id);
     if (templateResult.isErr()) {
       console.error({ event: "template_lookup_failed", error: templateResult.error.message, userId: from.id });
       await ctx.reply("Something went wrong. Please try again later.");
       return;
     }
     if (!templateResult.value) {
-      console.error({ event: "no_default_template", userId: from.id });
+      console.error({ event: "no_active_template", userId: from.id });
       await ctx.reply("No active card template configured. Please contact the admin.");
       return;
     }
@@ -149,14 +156,14 @@ function registerAddCommand(bot: Bot, deps: WebhookDeps): void {
       return;
     }
 
-    const templateResult = await deps.templateRepo.findDefault();
+    const templateResult = await resolveTemplate(deps.userRepo, deps.templateRepo, from.id);
     if (templateResult.isErr()) {
       console.error({ event: "template_lookup_failed", error: templateResult.error.message, userId: from.id });
       await ctx.reply("Something went wrong. Please try again later.");
       return;
     }
     if (!templateResult.value) {
-      console.error({ event: "no_default_template", userId: from.id });
+      console.error({ event: "no_active_template", userId: from.id });
       await ctx.reply("No active card template configured. Please contact the admin.");
       return;
     }
