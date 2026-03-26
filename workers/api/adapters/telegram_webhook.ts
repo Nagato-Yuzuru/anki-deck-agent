@@ -1,33 +1,39 @@
 import { Bot, webhookCallback } from "grammy";
+import type { Transformer } from "grammy";
 import type { UserFromGetMe } from "grammy/types";
-import type { ApiEnv } from "../../shared/mod.ts";
+import type { ApiEnv, TemplateRepositoryPort } from "../../shared/mod.ts";
 import { D1CardRepository } from "../../shared/adapters/d1_card_repository.ts";
 import { D1SubmissionRepository } from "../../shared/adapters/d1_submission_repository.ts";
-import { D1UserRepository } from "../../shared/adapters/d1_user_repository.ts";
 import { D1TemplateRepository } from "../../shared/adapters/d1_template_repository.ts";
+import { D1UserRepository } from "../../shared/adapters/d1_user_repository.ts";
 import { createTelegramNotification } from "../../shared/adapters/telegram_notification.ts";
 import { CfQueue } from "./cf_queue.ts";
 import { parseAddCommand } from "../handlers/add_command.ts";
 import { submitWord, type SubmitWordDeps } from "../services/submit_word.ts";
+import { resolveTemplate } from "../services/resolve_template.ts";
 import { type ExportCommandDeps, handleExportCommand } from "../handlers/export_command.ts";
 
 // Cache per isolate — immutable bot metadata, not mutable application state.
 let cachedBotInfo: UserFromGetMe | undefined;
 
-const DEFAULT_TEMPLATE_ID = 1;
+export type WebhookDeps = SubmitWordDeps & {
+  readonly templateRepo: TemplateRepositoryPort;
+};
 
 export type WebhookOptions = {
   readonly botInfo?: UserFromGetMe;
-  readonly deps?: SubmitWordDeps;
+  readonly deps?: WebhookDeps;
   readonly exportDeps?: ExportCommandDeps;
+  readonly apiTransformer?: Transformer;
 };
 
-function buildDeps(env: ApiEnv): SubmitWordDeps {
+function buildDeps(env: ApiEnv): WebhookDeps {
   return {
     userRepo: new D1UserRepository(env.DB),
     cardRepo: new D1CardRepository(env.DB),
     submissionRepo: new D1SubmissionRepository(env.DB),
     queue: new CfQueue(env.EVENTS),
+    templateRepo: new D1TemplateRepository(env.DB),
   };
 }
 
@@ -52,6 +58,10 @@ export async function handleWebhook(
     cachedBotInfo = bot.botInfo;
   }
 
+  if (options?.apiTransformer) {
+    bot.api.config.use(options.apiTransformer);
+  }
+
   const deps = options?.deps ?? buildDeps(env);
   registerAddCommand(bot, deps);
   registerExportCommand(bot, env, options);
@@ -62,7 +72,7 @@ export async function handleWebhook(
   return handler(req);
 }
 
-function registerAddCommand(bot: Bot, deps: SubmitWordDeps): void {
+function registerAddCommand(bot: Bot, deps: WebhookDeps): void {
   bot.command("add", async (ctx) => {
     const text = ctx.match;
     if (!text) {
@@ -82,6 +92,18 @@ function registerAddCommand(bot: Bot, deps: SubmitWordDeps): void {
       return;
     }
 
+    const templateResult = await resolveTemplate(deps.userRepo, deps.templateRepo, from.id);
+    if (templateResult.isErr()) {
+      console.error({ event: "template_lookup_failed", error: templateResult.error.message, userId: from.id });
+      await ctx.reply("Something went wrong. Please try again later.");
+      return;
+    }
+    if (!templateResult.value) {
+      console.error({ event: "no_active_template", userId: from.id });
+      await ctx.reply("No active card template configured. Please contact the admin.");
+      return;
+    }
+
     const sentMsg = await ctx.reply(`⏳ Generating card for "${parsed.word}"...`);
 
     const result = await submitWord(
@@ -93,7 +115,7 @@ function registerAddCommand(bot: Bot, deps: SubmitWordDeps): void {
         sentence: parsed.sentence,
         chatId: String(ctx.chat.id),
         messageId: String(sentMsg.message_id),
-        templateId: DEFAULT_TEMPLATE_ID,
+        templateId: templateResult.value.id,
       },
       deps,
     );
@@ -134,6 +156,18 @@ function registerAddCommand(bot: Bot, deps: SubmitWordDeps): void {
       return;
     }
 
+    const templateResult = await resolveTemplate(deps.userRepo, deps.templateRepo, from.id);
+    if (templateResult.isErr()) {
+      console.error({ event: "template_lookup_failed", error: templateResult.error.message, userId: from.id });
+      await ctx.reply("Something went wrong. Please try again later.");
+      return;
+    }
+    if (!templateResult.value) {
+      console.error({ event: "no_active_template", userId: from.id });
+      await ctx.reply("No active card template configured. Please contact the admin.");
+      return;
+    }
+
     const sentMsg = await ctx.reply(`⏳ Generating card for "${parsed.word}"...`);
 
     const result = await submitWord(
@@ -145,7 +179,7 @@ function registerAddCommand(bot: Bot, deps: SubmitWordDeps): void {
         sentence: parsed.sentence,
         chatId: String(ctx.chat.id),
         messageId: String(sentMsg.message_id),
-        templateId: DEFAULT_TEMPLATE_ID,
+        templateId: templateResult.value.id,
       },
       deps,
     );
